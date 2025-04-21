@@ -28,14 +28,15 @@ def bar_login():
 def bar_home():
     menu_bar = Menu(root, tearoff=0)
     menu_bar.add_command(label='Be Lune') 
-    # menu_bar.add_command(label='Menu', command=create_menu) 
-    # menu_bar.add_command(label='Checkout', command=create_checkout)
-    menu_bar.add_command(label='logout', command=login) 
+    menu_bar.add_command(label='home', command=home) 
+    menu_bar.add_command(label='order', command=order)
+    menu_bar.add_command(label='stock', command=stock)
+    menu_bar.add_command(label='profile', command=profile)
+    menu_bar.add_command(label='log out', command=login) 
     root.configure(menu=menu_bar)
 
 #login page   
 def login():
-
     # - Layout Frame -
     # frame outside
     fm = Frame(fm_main, bg='white', padx=295, pady=172)
@@ -62,7 +63,6 @@ def login():
     bot.grid(row=2,columnspan=2,sticky=NSEW)
     
     # - object inside -
-    
     #menubar
     bar_login()
     
@@ -81,12 +81,8 @@ def login():
     # bot frame 
     Button(bot,text="login",width=12,height=2,bg='#B12937',fg='white',font=("Inter", 16, "bold")).grid(row=0,column=0)
         
-        
-        
-
 # Register page
 def register():
-    
     # - Layout Frame -
     # frame outside
     fm = Frame(fm_main, bg='white', padx=295, pady=104)
@@ -115,7 +111,6 @@ def register():
     bot.grid(row=2,columnspan=2,sticky=NSEW)
     
     # - object inside -
-    
     #menubar
     bar_login()
     
@@ -146,8 +141,24 @@ def home():
     fm.grid(row=0, column=0, sticky=NSEW)
     fm.grid_rowconfigure(0, weight=1)
     fm.grid_columnconfigure(0, weight=1)
-    
-        
+def order():
+    bar_home()
+    fm = Frame(fm_main, bg='white', padx=20, pady=10)
+    fm.grid(row=0, column=0, sticky=NSEW)
+    fm.grid_rowconfigure(0, weight=1)
+    fm.grid_columnconfigure(0, weight=1)    
+def stock():
+    bar_home()
+    fm = Frame(fm_main, bg='white', padx=20, pady=10)
+    fm.grid(row=0, column=0, sticky=NSEW)
+    fm.grid_rowconfigure(0, weight=1)
+    fm.grid_columnconfigure(0, weight=1)
+def profile():
+    bar_home()
+    fm = Frame(fm_main, bg='white', padx=20, pady=10)
+    fm.grid(row=0, column=0, sticky=NSEW)
+    fm.grid_rowconfigure(0, weight=1)
+    fm.grid_columnconfigure(0, weight=1)
 # back-end
 
 
@@ -167,6 +178,6 @@ logo = PhotoImage(file="img/logo_full.png").subsample(4,4)
 
 # - RUN -
 
-register()
+home()
 
 root.mainloop()
