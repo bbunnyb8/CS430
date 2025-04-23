@@ -141,6 +141,31 @@ def home():
     fm.grid(row=0, column=0, sticky=NSEW)
     fm.grid_rowconfigure(0, weight=1)
     fm.grid_columnconfigure(0, weight=1)
+    
+    # submit_button = Button(top, text='Submit', command=print_answers) 
+    # submit_button.grid(row=0, column=2, sticky=EW)
+
+    # tree = Treeview(top, columns=("Name", "Age", "Country"), show="headings")
+
+    # # กำหนดหัวตาราง
+    # tree.heading("Name", text="ชื่อ")
+    # tree.heading("Age", text="อายุ")
+    # tree.heading("Country", text="ประเทศ")
+
+    # # กำหนดความกว้างคอลัมน์
+    # tree.column("Name", width=120)
+    # tree.column("Age", width=60, anchor=CENTER)
+    # tree.column("Country", width=100)
+
+    # # เพิ่มข้อมูล
+    # tree.insert("", END, values=("Alice", 25, "USA"))
+    # tree.insert("", END, values=("Bob", 30, "Thailand"))
+    # tree.insert("", END, values=("Charlie", 28, "Japan"))
+
+    # # แสดง Treeview
+    # tree.grid(row=1, column=0, columnspan=3, sticky=NSEW)
+
+    
 def order():
     bar_home()
     fm = Frame(fm_main, bg='white', padx=20, pady=10)
