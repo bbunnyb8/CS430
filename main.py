@@ -284,10 +284,42 @@ def profile(user):
     # bot frame 
     update_btn = Button(bot,text="update profile",bg='#B12937',fg='white',font=("Inter", 16, "bold"),command=lambda: update_profile(name.get(), username.get(), user_id))
     update_btn.grid(row=0,column=0, ipadx=50, ipady=5, padx=10)
-    change_password_btn = Button(bot,text="change password",bg='#B12937',fg='white',font=("Inter", 16, "bold"))
+    change_password_btn = Button(bot,text="change password",bg='#B12937',fg='white',font=("Inter", 16, "bold"),command=lambda: change_password_page(user))
     change_password_btn.grid(row=0,column=1, ipadx=50, ipady=5, padx=10)
-    #,command=lambda: change_password(password.get())
+
+def change_password_page(user):
     
+    popup = Toplevel(fm_main, bg='white')
+    popup.title("Change Password")
+    popup.geometry("500x200")
+    
+    popup.grid_rowconfigure((0,1,2), weight=1)
+    popup.grid_columnconfigure((0,1), weight=1)
+
+    #global veriable
+    global change_password_entry, change_confirm_password_entry
+    new_password = StringVar()
+    confirm_password = StringVar()
+    user_id = user[0]
+    
+    #set scale of component
+    long_entry = 80
+    high_entry = 4
+    spacing_comp = 10
+    
+    # - component inside -
+    
+    Label(popup,text="new password : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=0,column=0,sticky='e')
+    change_password_entry = Entry(popup,bg='#F3F3F3', textvariable = new_password)
+    change_password_entry.grid(row=0,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
+    
+    Label(popup,text="confirm password : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=1,column=0,sticky='e')
+    change_confirm_password_entry = Entry(popup,bg='#F3F3F3', textvariable = confirm_password)
+    change_confirm_password_entry.grid(row=1,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
+    
+    change_password_btn = Button(popup,text="submit",bg='#B12937',fg='white',font=("Inter", 16, "bold"),command=lambda: change_password(new_password.get(),confirm_password.get(),user_id))
+    change_password_btn.grid(row=2,columnspan=2, ipadx=50, ipady=5, padx=10)
+
 """ BACK END """
 
 def db_connection() :
@@ -334,7 +366,7 @@ def register_click(name, username, password, confirm_password) :
         messagebox.showwarning("Admin: ","Please enter confirm password")
         confirm_password_register_entry.focus_force()
     else : 
-        result = retrieve_profile(username)
+        result = check_user(username)
 
         if result :
             messagebox.showerror("Admin:","The username is already exists")
@@ -350,7 +382,7 @@ def register_click(name, username, password, confirm_password) :
                 messagebox.showwarning("Admin: ","Please make sure both password fields match exactly")
 
 #ตรวจสอบว่ามีข้อมูล username นี้อยู่ในตารางมั้ย
-def retrieve_profile(username):
+def check_user(username):
     sql = "select * from users where username = ?"
     cursor.execute(sql, [username])
     profile = cursor.fetchone()    
@@ -375,7 +407,7 @@ def update_profile(name, username, user_id):
             new_username = cursor.fetchone()
             if new_username :
                 #ตรวจสอบว่าซ้ำกันจริง โดยแบ่งเป็นซ้ำกันตัวอื่นหรีอซ้ำกับตัวมันเอง
-                if username == old_username :   
+                if new_username == old_username :   
                     #หากซ้ำกับตัวมันเอง ให้ทำการ update name ได้
                     sql = 'update users set name = ? where user_id = ?'
                     cursor.execute(sql, (name, user_id))
@@ -406,7 +438,29 @@ def retrieve_profile(user_id):
     cursor.execute(sql, [user_id])
     user = cursor.fetchone()
     return user
-    
+
+def change_password(new_password, confirm_password, user_id):
+    if new_password == "" :
+        messagebox.showwarning("Admin:","Please enter new password")
+        change_password_entry.focus_force() 
+    else :
+        if confirm_password == "" :
+            messagebox.showwarning("Admin:","Please enter confirm password")
+            change_confirm_password_entry.focus_force()  
+        else :
+            if new_password == confirm_password :
+                sql = 'update users set password = ? where user_id = ?'
+                cursor.execute(sql, (new_password, user_id))
+                conn.commit()
+                if cursor.rowcount > 0:
+                    messagebox.showinfo("Update Profile", "Updated new password successfully.")
+                    user = retrieve_profile(user_id)
+                    profile(user)
+                else:
+                    messagebox.showwarning("Update Profile", "No data changes.")
+            else :
+                messagebox.showwarning("Admin:","Your new password and confirmation do not match. Kindly confirm your password again")
+                change_confirm_password_entry.focus_force() 
 
 # --------------------------------------------------------------------------------------------------------
 # global variable
