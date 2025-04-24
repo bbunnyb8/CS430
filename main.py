@@ -3,7 +3,7 @@ import sqlite3
 from tkinter import messagebox
 from tkinter.ttk import Combobox, Treeview
 
-# front-end
+""" FRONT END """
 def create_window():
     root = Tk()
     root.title("POS : Be Lune")
@@ -28,13 +28,13 @@ def bar_login():
     menu_bar.add_command(label='exit', command=lambda: exit(0))  
     root.configure(menu=menu_bar)
 
-def bar_home():
+def bar_home(user):
     menu_bar = Menu(root, tearoff=0)
     menu_bar.add_command(label='Be Lune') 
-    menu_bar.add_command(label='home', command=home) 
-    menu_bar.add_command(label='order', command=order)
-    menu_bar.add_command(label='stock', command=stock)
-    menu_bar.add_command(label='profile', command=profile)
+    menu_bar.add_command(label='home', command=lambda: home(user)) 
+    menu_bar.add_command(label='order', command=lambda: order(user))
+    menu_bar.add_command(label='stock', command=lambda: stock(user))
+    menu_bar.add_command(label='profile', command=lambda: profile(user))
     menu_bar.add_command(label='log out', command=login) 
     root.configure(menu=menu_bar)
 
@@ -68,7 +68,6 @@ def login():
     
     #global veriable
     global username_login_entry, password_login_entry
-    global username_info, password_info
     username_info = StringVar()
     password_info = StringVar()
     
@@ -164,12 +163,19 @@ def register():
     # bot frame 
     Button(bot,text="register",bg='#B12937',fg='white',font=("Inter", 16, "bold"),command=lambda:  register_click(name_regis.get(), username_regis.get(), password_regis.get(), confirm_password_regis.get())).grid(row=0,column=0, ipadx=50, ipady=5)
 
-def home(username, password):
-    bar_home()
-    fm = Frame(fm_main, bg='white', padx=20, pady=10)
+def home(user):
+    # - Layout Frame -
+    # frame outside
+    fm = Frame(fm_main, bg='white', padx=295, pady=172)
     fm.grid(row=0, column=0, sticky=NSEW)
-    fm.grid_rowconfigure(0, weight=1)
-    fm.grid_columnconfigure(0, weight=1)
+    
+    # config layout for scroll page
+    fm.grid_rowconfigure((0,1,2), weight=1)
+    fm.grid_columnconfigure((0,1), weight=1)
+    
+    
+    #menubar
+    bar_home(user)
     
     # submit_button = Button(top, text='Submit', command=print_answers) 
     # submit_button.grid(row=0, column=2, sticky=EW)
@@ -195,26 +201,95 @@ def home(username, password):
     
 
     
-def order():
-    bar_home()
-    fm = Frame(fm_main, bg='white', padx=20, pady=10)
+def order(user):
+     # - Layout Frame -
+    # frame outside
+    fm = Frame(fm_main, bg='white', padx=295, pady=172)
     fm.grid(row=0, column=0, sticky=NSEW)
-    fm.grid_rowconfigure(0, weight=1)
-    fm.grid_columnconfigure(0, weight=1)    
-def stock():
-    bar_home()
-    fm = Frame(fm_main, bg='white', padx=20, pady=10)
-    fm.grid(row=0, column=0, sticky=NSEW)
-    fm.grid_rowconfigure(0, weight=1)
-    fm.grid_columnconfigure(0, weight=1)
-def profile():
-    bar_home()
-    fm = Frame(fm_main, bg='white', padx=20, pady=10)
-    fm.grid(row=0, column=0, sticky=NSEW)
-    fm.grid_rowconfigure(0, weight=1)
-    fm.grid_columnconfigure(0, weight=1)
     
-# back-end
+    # config layout for scroll page
+    fm.grid_rowconfigure((0,1,2), weight=1)
+    fm.grid_columnconfigure((0,1), weight=1)
+    
+    
+    #menubar
+    bar_home(user)
+       
+def stock(user):
+     # - Layout Frame -
+    # frame outside
+    fm = Frame(fm_main, bg='white', padx=295, pady=172)
+    fm.grid(row=0, column=0, sticky=NSEW)
+    
+    # config layout for scroll page
+    fm.grid_rowconfigure((0,1,2), weight=1)
+    fm.grid_columnconfigure((0,1), weight=1)
+    
+    
+    #menubar
+    bar_home(user)
+    
+def profile(user):
+    # - Layout Frame -
+    # frame outside
+    fm = Frame(fm_main, bg='white', padx=295, pady=104)
+    fm.grid(row=0, column=0, sticky=NSEW)
+    
+    # config layout for scroll page
+    fm.grid_rowconfigure(0, weight=1)
+    fm.grid_rowconfigure(1, weight=1)
+    fm.grid_columnconfigure((0,1), weight=1)
+    
+    # frame inside
+    top = Frame(fm,bg='white')
+    top.rowconfigure((0,1,2),weight=1)
+    top.columnconfigure(0,weight=1)
+    top.columnconfigure(1,weight=2)
+    top.grid(row=0,columnspan=2,sticky=NSEW)
+    
+    bot = Frame(fm,bg='white')
+    bot.rowconfigure(0,weight=1)
+    bot.columnconfigure((0,1),weight=1)
+    bot.grid(row=1,columnspan=2,sticky=NSEW)
+    
+    #global veriable
+    global name_profile_entry, username_profile_entry
+    username = StringVar(value=user[1])
+    password = StringVar(value=user[2])
+    name = StringVar(value=user[3])
+    user_id = user[0]
+    
+    #set scale of component
+    long_entry = 80
+    high_entry = 4
+    spacing_comp = 10
+    
+    # - component inside -
+    #menubar
+    bar_home(user)
+    
+    # top frame 
+    Label(top,text="name : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=0,column=0,sticky='e')
+    name_profile_entry = Entry(top,bg='#F3F3F3', textvariable = name)
+    name_profile_entry.grid(row=0,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
+    
+    Label(top,text="username : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=1,column=0,sticky='e')
+    username_profile_entry = Entry(top,bg='#F3F3F3', textvariable = username)
+    username_profile_entry.grid(row=1,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
+    
+    Label(top,text="password  : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=2,column=0,sticky='e')
+    password_profile_label = Label(top,bg='#F3F3F3', textvariable = password, anchor=W,)
+    password_profile_label.grid(row=2,column=1,sticky='w',ipadx=145 , ipady=high_entry ,padx=spacing_comp)
+    
+    # bot frame 
+    update_btn = Button(bot,text="update profile",bg='#B12937',fg='white',font=("Inter", 16, "bold"),command=lambda: update_profile(name.get(), username.get(), user_id))
+    update_btn.grid(row=0,column=0, ipadx=50, ipady=5, padx=10)
+    change_password_btn = Button(bot,text="change password",bg='#B12937',fg='white',font=("Inter", 16, "bold"))
+    change_password_btn.grid(row=0,column=1, ipadx=50, ipady=5, padx=10)
+    #,command=lambda: change_password(password.get())
+    
+""" BACK END """
+
 def db_connection() :
     db_path = 'database/Be_Lune.db'
     conn = sqlite3.connect(db_path)
@@ -227,30 +302,25 @@ def login_click(username,password) :
         messagebox.showwarning("Admin:","Please enter username")
         username_login_entry.focus_force()
     else :
-        # check username exists on database.
-        sql = "select * from users where username = ?"
-        cursor.execute(sql,[username])
-        username_true = cursor.fetchone()
-        
         if password == "" :
+            # check username exists on database.
             messagebox.showwarning("Admin:","Please enter password")
             password_login_entry.focus_force()
         else :
             # check username and password 
-            sql = "select * from users where password = ? "
-            cursor.execute(sql,[password])   #case2
-            password_true= cursor.fetchone()
-            if username_true and password_true :
+            sql = "select * from users where username = ? and password = ? "
+            cursor.execute(sql,[username, password])   #case2
+            user = cursor.fetchone()
+            if user :
                 messagebox.showinfo("Admin:","Login Successfully")
-                print(f"{username_true}\n{password_true}")
-                home(username_true, password_true)
+                print(user)
+                home(user)
             else :
                 messagebox.showwarning("Admin:","Username not found\n Please register before Login")
                 password_login_entry.select_range(0,END)
                 password_login_entry.focus_force()
 
 def register_click(name, username, password, confirm_password) :
-    # TODO: Validate all data
     if name == "" :
         messagebox.showwarning("Admin: ","Please enter name")
         name_register_entry.focus_force()
@@ -286,6 +356,58 @@ def retrieve_profile(username):
     profile = cursor.fetchone()    
     return profile
 
+def update_profile(name, username, user_id):
+    if name == "" :
+        messagebox.showwarning("Admin:","Please enter name")
+        name_profile_entry.focus_force() 
+    else :
+        if username == "" :
+            messagebox.showwarning("Admin:","Please enter username")
+            username_profile_entry.focus_force()  
+        else :
+            #เรียกหาข้อมูลเก่าของผู้ใช้งาน
+            sql = "select * from users where user_id = ?"
+            cursor.execute(sql,[user_id])
+            old_username = cursor.fetchone()
+            #ตรวจข้อมูลชื่อผู้ใช้ ใหม่ว่าเหมือนกับข้อมูลผู้ใช้คนอื่นมั้ย
+            sql = "select * from users where username = ?"
+            cursor.execute(sql,[username])
+            new_username = cursor.fetchone()
+            if new_username :
+                #ตรวจสอบว่าซ้ำกันจริง โดยแบ่งเป็นซ้ำกันตัวอื่นหรีอซ้ำกับตัวมันเอง
+                if username == old_username :   
+                    #หากซ้ำกับตัวมันเอง ให้ทำการ update name ได้
+                    sql = 'update users set name = ? where user_id = ?'
+                    cursor.execute(sql, (name, user_id))
+                    conn.commit()
+                    if cursor.rowcount > 0:
+                        messagebox.showinfo("Update Profile", "Updated profile successfully.")
+                        user = retrieve_profile(user_id)
+                        profile(user)
+                    else:
+                        messagebox.showwarning("Update Profile", "No data changes.")
+                else :
+                    messagebox.showwarning("Admin:","The username already exists in the system. Please enter a new username")
+                    username_profile_entry.focus_force() 
+            else :
+                #ทำการ update username และ name
+                sql = 'update users set username = ?, name = ? where user_id = ?'
+                cursor.execute(sql, (username, name, user_id))
+                conn.commit()
+                if cursor.rowcount > 0:
+                    messagebox.showinfo("Update Profile", "Updated profile successfully.")
+                    user = retrieve_profile(user_id)
+                    profile(user)
+                else:
+                    messagebox.showwarning("Update Profile", "No data changes.")
+                    
+def retrieve_profile(user_id):
+    sql = "select * from users where user_id = ?"
+    cursor.execute(sql, [user_id])
+    user = cursor.fetchone()
+    return user
+    
+
 # --------------------------------------------------------------------------------------------------------
 # global variable
 
@@ -299,11 +421,15 @@ conn,cursor = db_connection()
 logo = PhotoImage(file="img/logo_full.png").subsample(4,4)
 
 
+# admin run
+sql = "select * from users where user_id = 1"
+cursor.execute(sql)
+user = cursor.fetchone()    
 
 
 # - RUN -
 
 
-login()
+profile(user)
 
 root.mainloop()
