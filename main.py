@@ -80,7 +80,7 @@ def login():
     bar_login()
 
     # top frame 
-    Label(top,image=logo,bg='white').grid(row=0,column=0,sticky='news') 
+    Label(top,image=logo_img,bg='white').grid(row=0,column=0,sticky='news') 
     
     # mid frame 
     Label(mid,text="username : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=0,column=0,sticky='e')
@@ -141,7 +141,7 @@ def register():
     bar_login()
     
     # top frame 
-    Label(top,image=logo,bg='white').grid(row=0,column=0,sticky='news') 
+    Label(top,image=logo_img,bg='white').grid(row=0,column=0,sticky='news') 
     
     # mid frame 
     Label(mid,text="name : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=0,column=0,sticky='e')
@@ -166,38 +166,99 @@ def register():
 def home(user):
     # - Layout Frame -
     # frame outside
-    fm = Frame(fm_main, bg='white', padx=295, pady=172)
+    fm = Frame(fm_main, bg='white')
     fm.grid(row=0, column=0, sticky=NSEW)
     
     # config layout for scroll page
-    fm.grid_rowconfigure((0,1,2), weight=1)
-    fm.grid_columnconfigure((0,1), weight=1)
+    fm.grid_rowconfigure(0, weight=4)
+    fm.grid_columnconfigure(0, weight=4)
+    fm.grid_columnconfigure(1, weight=3)
+    
+    """
+    layout ส่วนแสดงสินค้า มี 2 ส่วน ส่วนแรกเป็นชื่อหน้าต่างที่กำลังทำงานอยู่ และปุ่มค้นหา 
+    ส่วนที่สอง เป็นตารางแสดงรายการสินค้า
+    """
+    fm_show_product = Frame(fm, bg="white")
+    fm_show_product.grid(row=0, column=0, sticky=NSEW)
+    fm_show_product.grid_rowconfigure(0, weight=1)
+    fm_show_product.grid_rowconfigure(1, weight=4)
+    fm_show_product.grid_columnconfigure((0,1), weight=1)
     
     
+    # # frame ของ head
+    # fm_head = Frame(fm_show_product, bg= "white")
+    # fm_head.grid(row=0,column=0, sticky=NSEW)
+    # fm_head.grid_rowconfigure(0, weight=1)
+    # fm_head.grid_columnconfigure(0, weight=0)
+    
+    
+    # # frame ของ search
+    # fm_search = Frame(fm_show_product, bg= "white")
+    # fm_search.grid(row=0,column=1, sticky=NSEW)
+    # fm_search.grid_rowconfigure(0, weight=1)
+    # fm_search.grid_columnconfigure(0, weight=1)
+    
+    
+    # # frame ของ ตารางสินค้า
+    # fm_table = Frame(fm_show_product, bg= "white")
+    # fm_table.grid(row=1,columnspan=2, sticky=NSEW)
+    # fm_table.grid_rowconfigure(0, weight=1)
+    # fm_table.grid_columnconfigure(0, weight=1)
+    
+    #layout รายการที่เลือก
+    fm_select_product = Frame(fm, bg="red")
+    fm_select_product.grid(row=0, column=1, sticky=NSEW)
+    
+    #global veriable
+    # global name_register_entry, username_register_entry, password_register_entry, confirm_password_register_entry
+    
+    # name_regis = StringVar()
+    # username_regis = StringVar()
+    # password_regis = StringVar()
+    # confirm_password_regis = StringVar()
+    
+    #set scale of component
+    long_entry = 80
+    high_entry = 4
+    spacing_comp = 10
+    
+    # frame inside
     #menubar
     bar_home(user)
     
-    # submit_button = Button(top, text='Submit', command=print_answers) 
-    # submit_button.grid(row=0, column=2, sticky=EW)
-    # tree = Treeview(top, columns=("Name", "Age", "Country"), show="headings")
+    #head name page
+    Label(fm_show_product,text="Home",bg='white',fg='black',font=("Inter", 16, "bold")).grid(row=0,column=0,sticky=W,padx=spacing_comp)
+    
+    #search frame
+    search_home_entry = Entry(fm_show_product,bg='white',fg='black',font=("Inter", 12))
+    search_home_entry.grid(row=0,column=1, ipadx=long_entry,ipady=high_entry ,padx=spacing_comp, sticky=E) #Spy Gb
+    Button(fm_show_product,image=search_icon).grid(row=0, column=1,padx=spacing_comp, sticky=E)
+    
+    
 
-    # # กำหนดหัวตาราง
-    # tree.heading("Name", text="ชื่อ")
-    # tree.heading("Age", text="อายุ")
-    # tree.heading("Country", text="ประเทศ")
+    # table product
+    tree = Treeview(fm_show_product, columns=("id", "name", "price", "amount"), show="headings")
 
-    # # กำหนดความกว้างคอลัมน์
-    # tree.column("Name", width=120)
-    # tree.column("Age", width=60, anchor=CENTER)
-    # tree.column("Country", width=100)
+    # กำหนดหัวตาราง
+    tree.heading("id", text="id")
+    tree.heading("name", text="name")
+    tree.heading("price", text="price")
+    tree.heading("amount", text="amount")
+    
 
-    # # เพิ่มข้อมูล
-    # tree.insert("", END, values=("Alice", 25, "USA"))
-    # tree.insert("", END, values=("Bob", 30, "Thailand"))
-    # tree.insert("", END, values=("Charlie", 28, "Japan"))
+    # กำหนดความกว้างคอลัมน์
+    tree.column("id", width=150, anchor=W)
+    tree.column("name", width=150, anchor=W)
+    tree.column("price", width=150, anchor=W)
+    tree.column("amount", width=150, anchor=W)
+
+    # เพิ่มข้อมูล
+    
+    tree.insert("", END, value=( 1, "cake",20,16))
+    
 
     # # แสดง Treeview
-    # tree.grid(row=1, column=0, columnspan=3, sticky=NSEW)
+    tree.grid(row=1, columnspan=2, padx=spacing_comp, sticky=NSEW)
     
 
     
@@ -472,7 +533,12 @@ conn,cursor = db_connection()
 # - Spy -
 
 # - img -
-logo = PhotoImage(file="img/logo_full.png").subsample(4,4)
+logo_img = PhotoImage(file="img/logo_full.png").subsample(4,4)
+add_cart_icon = PhotoImage(file="img/add_cart.png")
+add_item_icon = PhotoImage(file="img/add_item.png")
+delete_icon = PhotoImage(file="img/delete.png")
+edit_icon = PhotoImage(file="img/edit.png")
+search_icon = PhotoImage(file="img/search.png")
 
 
 # admin run
@@ -483,7 +549,6 @@ user = cursor.fetchone()
 
 # - RUN -
 
-
-profile(user)
+home(user)
 
 root.mainloop()
