@@ -2,18 +2,18 @@ from tkinter import *
 import sqlite3
 from tkinter import messagebox
 from tkinter.ttk import Combobox, Treeview
-
+from connect import *
 """ FRONT END """
 def create_window():
     root = Tk()
     root.title("POS : Be Lune")
     root.geometry("1194x834")
-    root.configure(bg="white")
+    root.configure(bg=cl_white)
     root.grid_rowconfigure(0, weight=1)
     root.grid_columnconfigure(0, weight=1)
     return root
 def create_layout(root):
-    fm_main = Frame(root,bg="white",padx=24,pady=24)
+    fm_main = Frame(root,bg=cl_white,padx=24,pady=24)
     fm_main.grid_rowconfigure(0, weight=1)
     fm_main.grid_columnconfigure(0, weight=1)
     fm_main.grid(row=0, column=0, sticky=NSEW)
@@ -43,7 +43,7 @@ def login():
     
     # - Layout Frame -
     # frame outside
-    fm = Frame(fm_main, bg='white', padx=295, pady=172)
+    fm = Frame(fm_main, bg=cl_white, padx=295, pady=172)
     fm.grid(row=0, column=0, sticky=NSEW)
     
     # config layout for scroll page
@@ -51,17 +51,17 @@ def login():
     fm.grid_columnconfigure((0,1), weight=1)
     
     # frame inside
-    top = Frame(fm,bg='white')
+    top = Frame(fm,bg=cl_white)
     top.rowconfigure(0,weight=1)
     top.columnconfigure(0,weight=1)
     top.grid(row=0,columnspan=2,sticky=NSEW)
     
-    mid = Frame(fm,bg='white')
+    mid = Frame(fm,bg=cl_white)
     mid.rowconfigure((0,1),weight=1)
     mid.columnconfigure((0,1),weight=1)
     mid.grid(row=1,columnspan=2,sticky=NSEW)
     
-    bot = Frame(fm,bg='white')
+    bot = Frame(fm,bg=cl_white)
     bot.rowconfigure(0,weight=1)
     bot.columnconfigure(0,weight=1)
     bot.grid(row=2,columnspan=2,sticky=NSEW)
@@ -72,33 +72,31 @@ def login():
     password_info = StringVar()
     
     #set scale of component
-    long_entry = 80
-    high_entry = 4
-    spacing_comp = 10
+    
     # - component inside -
     #menubar
     bar_login()
 
     # top frame 
-    Label(top,image=logo_img,bg='white').grid(row=0,column=0,sticky='news') 
+    Label(top,image=logo_img,bg=cl_white).grid(row=0,column=0,sticky='news') 
     
     # mid frame 
-    Label(mid,text="username : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=0,column=0,sticky='e')
-    username_login_entry = Entry(mid,bg='#F3F3F3', textvariable=username_info)
+    Label(mid,text="username : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=0,column=0,sticky='e')
+    username_login_entry = Entry(mid,bg=cl_white_gray, textvariable=username_info)
     username_login_entry.grid(row=0,column=1,sticky='w', ipady=high_entry, ipadx=long_entry, padx=spacing_comp)
     
-    Label(mid,text="password  : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=1,column=0,sticky='e')
-    password_login_entry = Entry(mid,bg='#F3F3F3',show='*', textvariable=password_info)
+    Label(mid,text="password  : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=1,column=0,sticky='e')
+    password_login_entry = Entry(mid,bg=cl_white_gray,show='*', textvariable=password_info)
     password_login_entry.grid(row=1, column=1, sticky='w', ipady=high_entry, ipadx=long_entry, padx=spacing_comp)
 
     # bot frame 
-    Button(bot,text="login",bg='#B12937',fg='white',font=("Inter", 16, "bold"), command=lambda:login_click(username_info.get(),password_info.get())).grid(row=0,column=0, ipadx=50, ipady=5)
+    Button(bot,text="login",bg=cl_red,fg=cl_white,font=font_h3_bold, command=lambda:login_click(username_info.get(),password_info.get())).grid(row=0,column=0, ipadx=50, ipady=5)
         
 # Register page
 def register():
     # - Layout Frame -
     # frame outside
-    fm = Frame(fm_main, bg='white', padx=295, pady=104)
+    fm = Frame(fm_main, bg=cl_white, padx=295, pady=104)
     fm.grid(row=0, column=0, sticky=NSEW)
     
     # config layout for scroll page
@@ -107,18 +105,18 @@ def register():
     fm.grid_columnconfigure((0,1), weight=1)
     
     # frame inside
-    top = Frame(fm,bg='white')
+    top = Frame(fm,bg=cl_white)
     top.rowconfigure(0,weight=1)
     top.columnconfigure(0,weight=1)
     top.grid(row=0,columnspan=2,sticky=NSEW)
     
-    mid = Frame(fm,bg='white')
+    mid = Frame(fm,bg=cl_white)
     mid.rowconfigure((0,1,2,3),weight=1)
     mid.columnconfigure(0,weight=1)
     mid.columnconfigure(1,weight=3)
     mid.grid(row=1,columnspan=2,sticky=NSEW)
     
-    bot = Frame(fm,bg='white')
+    bot = Frame(fm,bg=cl_white)
     bot.rowconfigure(0,weight=1)
     bot.columnconfigure(0,weight=1)
     bot.grid(row=2,columnspan=2,sticky=NSEW)
@@ -132,41 +130,39 @@ def register():
     confirm_password_regis = StringVar()
     
     #set scale of component
-    long_entry = 80
-    high_entry = 4
-    spacing_comp = 10
+    
     
     # - component inside -
     #menubar
     bar_login()
     
     # top frame 
-    Label(top,image=logo_img,bg='white').grid(row=0,column=0,sticky='news') 
+    Label(top,image=logo_img,bg=cl_white).grid(row=0,column=0,sticky='news') 
     
     # mid frame 
-    Label(mid,text="name : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=0,column=0,sticky='e')
-    name_register_entry = Entry(mid,bg='#F3F3F3', textvariable = name_regis)
+    Label(mid,text="name : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=0,column=0,sticky='e')
+    name_register_entry = Entry(mid,bg=cl_white_gray, textvariable = name_regis)
     name_register_entry.grid(row=0,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
     
-    Label(mid,text="username : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=1,column=0,sticky='e')
-    username_register_entry = Entry(mid,bg='#F3F3F3', textvariable = username_regis)
+    Label(mid,text="username : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=1,column=0,sticky='e')
+    username_register_entry = Entry(mid,bg=cl_white_gray, textvariable = username_regis)
     username_register_entry.grid(row=1,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
     
-    Label(mid,text="password  : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=2,column=0,sticky='e')
-    password_register_entry= Entry(mid,bg='#F3F3F3',show='*', textvariable = password_regis)
+    Label(mid,text="password  : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=2,column=0,sticky='e')
+    password_register_entry= Entry(mid,bg=cl_white_gray,show='*', textvariable = password_regis)
     password_register_entry.grid(row=2,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
     
-    Label(mid,text="confirm password  : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=3,column=0,sticky='e')
-    confirm_password_register_entry = Entry(mid,bg='#F3F3F3',show='*', textvariable = confirm_password_regis)
+    Label(mid,text="confirm password  : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=3,column=0,sticky='e')
+    confirm_password_register_entry = Entry(mid,bg=cl_white_gray,show='*', textvariable = confirm_password_regis)
     confirm_password_register_entry.grid(row=3,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
 
     # bot frame 
-    Button(bot,text="register",bg='#B12937',fg='white',font=("Inter", 16, "bold"),command=lambda:  register_click(name_regis.get(), username_regis.get(), password_regis.get(), confirm_password_regis.get())).grid(row=0,column=0, ipadx=50, ipady=5)
+    Button(bot,text="register",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda:  register_click(name_regis.get(), username_regis.get(), password_regis.get(), confirm_password_regis.get())).grid(row=0,column=0, ipadx=50, ipady=5)
 
 def home(user):
     # - Layout Frame -
     # frame outside
-    fm = Frame(fm_main, bg='white')
+    fm = Frame(fm_main, bg=cl_white)
     fm.grid(row=0, column=0, sticky=NSEW)
     
     # config layout for scroll page
@@ -178,39 +174,18 @@ def home(user):
     layout ส่วนแสดงสินค้า มี 2 ส่วน ส่วนแรกเป็นชื่อหน้าต่างที่กำลังทำงานอยู่ และปุ่มค้นหา 
     ส่วนที่สอง เป็นตารางแสดงรายการสินค้า
     """
-    fm_show_product = Frame(fm, bg="white")
+    fm_show_product = Frame(fm, bg=cl_white)
     fm_show_product.grid(row=0, column=0, sticky=NSEW)
     fm_show_product.grid_rowconfigure(0, weight=1)
     fm_show_product.grid_rowconfigure(1, weight=4)
     fm_show_product.grid_columnconfigure((0,1), weight=1)
     
-    
-    # # frame ของ head
-    # fm_head = Frame(fm_show_product, bg= "white")
-    # fm_head.grid(row=0,column=0, sticky=NSEW)
-    # fm_head.grid_rowconfigure(0, weight=1)
-    # fm_head.grid_columnconfigure(0, weight=0)
-    
-    
-    # # frame ของ search
-    # fm_search = Frame(fm_show_product, bg= "white")
-    # fm_search.grid(row=0,column=1, sticky=NSEW)
-    # fm_search.grid_rowconfigure(0, weight=1)
-    # fm_search.grid_columnconfigure(0, weight=1)
-    
-    
-    # # frame ของ ตารางสินค้า
-    # fm_table = Frame(fm_show_product, bg= "white")
-    # fm_table.grid(row=1,columnspan=2, sticky=NSEW)
-    # fm_table.grid_rowconfigure(0, weight=1)
-    # fm_table.grid_columnconfigure(0, weight=1)
-    
     #layout รายการที่เลือก
     fm_select_product = Frame(fm, bg="red")
     fm_select_product.grid(row=0, column=1, sticky=NSEW)
     
-    #global veriable
-    # global name_register_entry, username_register_entry, password_register_entry, confirm_password_register_entry
+    #veriable
+    
     
     # name_regis = StringVar()
     # username_regis = StringVar()
@@ -218,21 +193,20 @@ def home(user):
     # confirm_password_regis = StringVar()
     
     #set scale of component
-    long_entry = 80
-    high_entry = 4
-    spacing_comp = 10
+    
     
     # frame inside
     #menubar
     bar_home(user)
     
     #head name page
-    Label(fm_show_product,text="Home",bg='white',fg='black',font=("Inter", 16, "bold")).grid(row=0,column=0,sticky=W,padx=spacing_comp)
+    Label(fm_show_product,text="Home",bg=cl_white,fg='black',font=font_h3_bold).grid(row=0,column=0,sticky=W,padx=spacing_comp)
     
     #search frame
-    search_home_entry = Entry(fm_show_product,bg='white',fg='black',font=("Inter", 12))
+    search_home_entry = Entry(fm_show_product,bg=cl_white,fg='black',font=font_h5)
     search_home_entry.grid(row=0,column=1, ipadx=long_entry,ipady=high_entry ,padx=spacing_comp, sticky=E) #Spy Gb
-    Button(fm_show_product,image=search_icon).grid(row=0, column=1,padx=spacing_comp, sticky=E)
+    search_button = Button(fm_show_product,image=search_icon)
+    search_button.grid(row=0, column=1,padx=spacing_comp, sticky=E)
     
     
 
@@ -265,7 +239,7 @@ def home(user):
 def order(user):
      # - Layout Frame -
     # frame outside
-    fm = Frame(fm_main, bg='white', padx=295, pady=172)
+    fm = Frame(fm_main, bg=cl_white, padx=295, pady=172)
     fm.grid(row=0, column=0, sticky=NSEW)
     
     # config layout for scroll page
@@ -279,7 +253,7 @@ def order(user):
 def stock(user):
      # - Layout Frame -
     # frame outside
-    fm = Frame(fm_main, bg='white', padx=295, pady=172)
+    fm = Frame(fm_main, bg=cl_white, padx=295, pady=172)
     fm.grid(row=0, column=0, sticky=NSEW)
     
     # config layout for scroll page
@@ -293,7 +267,7 @@ def stock(user):
 def profile(user):
     # - Layout Frame -
     # frame outside
-    fm = Frame(fm_main, bg='white', padx=295, pady=104)
+    fm = Frame(fm_main, bg=cl_white, padx=295, pady=104)
     fm.grid(row=0, column=0, sticky=NSEW)
     
     # config layout for scroll page
@@ -302,13 +276,13 @@ def profile(user):
     fm.grid_columnconfigure((0,1), weight=1)
     
     # frame inside
-    top = Frame(fm,bg='white')
+    top = Frame(fm,bg=cl_white)
     top.rowconfigure((0,1,2),weight=1)
     top.columnconfigure(0,weight=1)
     top.columnconfigure(1,weight=2)
     top.grid(row=0,columnspan=2,sticky=NSEW)
     
-    bot = Frame(fm,bg='white')
+    bot = Frame(fm,bg=cl_white)
     bot.rowconfigure(0,weight=1)
     bot.columnconfigure((0,1),weight=1)
     bot.grid(row=1,columnspan=2,sticky=NSEW)
@@ -321,36 +295,34 @@ def profile(user):
     user_id = user[0]
     
     #set scale of component
-    long_entry = 80
-    high_entry = 4
-    spacing_comp = 10
+    
     
     # - component inside -
     #menubar
     bar_home(user)
     
     # top frame 
-    Label(top,text="name : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=0,column=0,sticky='e')
-    name_profile_entry = Entry(top,bg='#F3F3F3', textvariable = name)
+    Label(top,text="name : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=0,column=0,sticky='e')
+    name_profile_entry = Entry(top,bg=cl_white_gray, textvariable = name)
     name_profile_entry.grid(row=0,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
     
-    Label(top,text="username : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=1,column=0,sticky='e')
-    username_profile_entry = Entry(top,bg='#F3F3F3', textvariable = username)
+    Label(top,text="username : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=1,column=0,sticky='e')
+    username_profile_entry = Entry(top,bg=cl_white_gray, textvariable = username)
     username_profile_entry.grid(row=1,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
     
-    Label(top,text="password  : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=2,column=0,sticky='e')
-    password_profile_label = Label(top,bg='#F3F3F3', textvariable = password, anchor=W,)
+    Label(top,text="password  : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=2,column=0,sticky='e')
+    password_profile_label = Label(top,bg=cl_white_gray, textvariable = password, anchor=W,)
     password_profile_label.grid(row=2,column=1,sticky='w',ipadx=145 , ipady=high_entry ,padx=spacing_comp)
     
     # bot frame 
-    update_btn = Button(bot,text="update profile",bg='#B12937',fg='white',font=("Inter", 16, "bold"),command=lambda: update_profile(name.get(), username.get(), user_id))
+    update_btn = Button(bot,text="update profile",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: update_profile(name.get(), username.get(), user_id))
     update_btn.grid(row=0,column=0, ipadx=50, ipady=5, padx=10)
-    change_password_btn = Button(bot,text="change password",bg='#B12937',fg='white',font=("Inter", 16, "bold"),command=lambda: change_password_page(user))
+    change_password_btn = Button(bot,text="change password",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: change_password_page(user))
     change_password_btn.grid(row=0,column=1, ipadx=50, ipady=5, padx=10)
 
 def change_password_page(user):
     
-    popup = Toplevel(fm_main, bg='white')
+    popup = Toplevel(fm_main, bg=cl_white)
     popup.title("Change Password")
     popup.geometry("500x200")
     
@@ -364,21 +336,19 @@ def change_password_page(user):
     user_id = user[0]
     
     #set scale of component
-    long_entry = 80
-    high_entry = 4
-    spacing_comp = 10
+    
     
     # - component inside -
     
-    Label(popup,text="new password : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=0,column=0,sticky='e')
-    change_password_entry = Entry(popup,bg='#F3F3F3', textvariable = new_password)
+    Label(popup,text="new password : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=0,column=0,sticky='e')
+    change_password_entry = Entry(popup,bg=cl_white_gray, textvariable = new_password)
     change_password_entry.grid(row=0,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
     
-    Label(popup,text="confirm password : ",bg='white',fg='#858585',font=("Inter", 12)).grid(row=1,column=0,sticky='e')
-    change_confirm_password_entry = Entry(popup,bg='#F3F3F3', textvariable = confirm_password)
+    Label(popup,text="confirm password : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=1,column=0,sticky='e')
+    change_confirm_password_entry = Entry(popup,bg=cl_white_gray, textvariable = confirm_password)
     change_confirm_password_entry.grid(row=1,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
     
-    change_password_btn = Button(popup,text="submit",bg='#B12937',fg='white',font=("Inter", 16, "bold"),command=lambda: change_password(new_password.get(),confirm_password.get(),user_id))
+    change_password_btn = Button(popup,text="submit",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: change_password(new_password.get(),confirm_password.get(),user_id))
     change_password_btn.grid(row=2,columnspan=2, ipadx=50, ipady=5, padx=10)
 
 """ BACK END """
@@ -475,7 +445,7 @@ def update_profile(name, username, user_id):
                     conn.commit()
                     if cursor.rowcount > 0:
                         messagebox.showinfo("Update Profile", "Updated profile successfully.")
-                        user = retrieve_profile(user_id)
+                        user = retrieve_user(user_id)
                         profile(user)
                     else:
                         messagebox.showwarning("Update Profile", "No data changes.")
@@ -489,16 +459,28 @@ def update_profile(name, username, user_id):
                 conn.commit()
                 if cursor.rowcount > 0:
                     messagebox.showinfo("Update Profile", "Updated profile successfully.")
-                    user = retrieve_profile(user_id)
+                    user = retrieve_user(user_id)
                     profile(user)
                 else:
                     messagebox.showwarning("Update Profile", "No data changes.")
                     
-def retrieve_profile(user_id):
+def retrieve_user(user_id):
     sql = "select * from users where user_id = ?"
     cursor.execute(sql, [user_id])
     user = cursor.fetchone()
     return user
+def retrieve_product(user_id):
+    sql = "select * from products where user_id = ?"
+    cursor.execute(sql, [user_id])
+    product = cursor.fetchone()
+    return product
+def retrieve_order(user_id):
+    sql = "select * from orders where user_id = ?"
+    cursor.execute(sql, [user_id])
+    order = cursor.fetchone()
+    return order
+
+
 
 def change_password(new_password, confirm_password, user_id):
     if new_password == "" :
@@ -515,7 +497,7 @@ def change_password(new_password, confirm_password, user_id):
                 conn.commit()
                 if cursor.rowcount > 0:
                     messagebox.showinfo("Update Profile", "Updated new password successfully.")
-                    user = retrieve_profile(user_id)
+                    user = retrieve_user(user_id)
                     profile(user)
                 else:
                     messagebox.showwarning("Update Profile", "No data changes.")
@@ -524,7 +506,27 @@ def change_password(new_password, confirm_password, user_id):
                 change_confirm_password_entry.focus_force() 
 
 # --------------------------------------------------------------------------------------------------------
-# global variable
+# set scale 
+long_entry = 80
+high_entry = 4
+spacing_comp = 10
+
+# set font
+font_h5 = ("Inter",12)
+font_h4 = ("Inter",14)
+font_h3 = ("Inter",16)
+font_h3_bold = ("Inter",16,"bold")
+font_h2 = ("Inter",18)
+font_h2_bold = ("Inter",18,"bold")
+font_h1 = ("Inter",20)
+font_h1_bold = ("Inter",20,"bold")
+
+#set color
+cl_white = "#ffffff"
+cl_black = "#000000"
+cl_red = "#B12937"
+cl_gray = "#858585"
+cl_white_gray ="#F3F3F3"
 
 root = create_window()
 fm_main = create_layout(root)
@@ -549,6 +551,6 @@ user = cursor.fetchone()
 
 # - RUN -
 
-home(user)
+profile(user)
 
 root.mainloop()
