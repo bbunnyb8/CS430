@@ -234,77 +234,7 @@ def home(user):
     tree.grid(row=1, columnspan=2, padx=spacing_comp, sticky=NSEW)
     
 
-def order(user):
-    # - Layout Frame -
-    # frame outside
-    fm = Frame(fm_main, bg=cl_white)
-    fm.grid(row=0, column=0, sticky=NSEW)
-    
-    # config layout for scroll page
-    fm.grid_rowconfigure(0, weight=4)
-    fm.grid_columnconfigure(0, weight=4)
-    fm.grid_columnconfigure(1, weight=3)
-    
-    """
-    layout ส่วนแสดงสินค้า มี 2 ส่วน ส่วนแรกเป็นชื่อหน้าต่างที่กำลังทำงานอยู่ และปุ่มค้นหา 
-    ส่วนที่สอง เป็นตารางแสดงรายการสินค้า
-    """
-    fm_show_product = Frame(fm, bg=cl_white)
-    fm_show_product.grid(row=0, column=0, sticky=NSEW)
-    fm_show_product.grid_rowconfigure(0, weight=1)
-    fm_show_product.grid_rowconfigure(1, weight=4)
-    fm_show_product.grid_columnconfigure((0,1), weight=1)
-    
-    #layout รายการที่เลือก
-    fm_select_product = Frame(fm, bg="red")
-    fm_select_product.grid(row=0, column=1, sticky=NSEW)
-    
-    #veriable
-     
-    # name_regis = StringVar()
-    # username_regis = StringVar()
-    # password_regis = StringVar()
-    # confirm_password_regis = StringVar()
-    
-    #set scale of component
-    columns = ("id", "name", "price", "amount")
-    
-    # frame inside
-    #menubar
-    bar_home(user)
-    
-    #head name page
-    Label(fm_show_product,text="Home",bg=cl_white,fg='black',font=font_h3_bold).grid(row=0,column=0,sticky=W,padx=spacing_comp)
-    
-    #search frame
-    search_home_entry = Entry(fm_show_product,bg=cl_white,fg='black',font=font_h5)
-    search_home_entry.grid(row=0,column=1, ipadx=long_entry,ipady=high_entry ,padx=spacing_comp, sticky=E) #Spy Gb
-    search_button = Button(fm_show_product,image=search_icon)
-    search_button.grid(row=0, column=1,padx=spacing_comp, sticky=E)
-    
-    product = retrieve_product(user[0])
-
-    # table product
-    tree = Treeview(fm_show_product, columns=columns, show="headings")
-
-    # กำหนดหัวตาราง
-    for col in columns:
-        tree.heading(col, text=col)
-    # กำหนดความกว้างคอลัมน์
-    for col in columns:
-        tree.column(col, width=50, anchor=W)
-    # เพิ่มข้อมูล
-    for row in product:
-        tree.insert("", END, value=row)
-    
-    context_menu = Menu(root, tearoff=0)
-    context_menu.add_command(label="add cart")
-    #ผูกการคลิกขวากับ show_context_menu
-    tree.bind("<Button-3>", lambda event: show_context_menu(event, tree, context_menu))
-    # # แสดง Treeview
-    tree.grid(row=1, columnspan=2, padx=spacing_comp, sticky=NSEW)
-       
-def stock(user):
+def order(user,order=None):
     # - Layout Frame -
     # frame outside
     fm = Frame(fm_main, bg=cl_white)
@@ -315,19 +245,15 @@ def stock(user):
     fm.grid_columnconfigure((0), weight=1)
     fm.grid_rowconfigure(1, weight=10)
     
-
-    #layout รายการที่เลือก
-    
-    
-    #veriable
-     
-    # name_regis = StringVar()
-    # username_regis = StringVar()
-    # password_regis = StringVar()
-    # confirm_password_regis = StringVar()
-    
-    #set scale of component
-    columns = ("id", "name", "price", "amount")
+    # variable
+    global  tree_order
+    search_var = StringVar()
+    # find product
+    if order is None:
+        order = retrieve_order(user[0])
+    # table product
+    columns = ("id", "quantity", "total price")
+    tree_order = Treeview(fm, columns=columns, show="headings")
     
     # frame inside
     #menubar
@@ -337,36 +263,90 @@ def stock(user):
     Label(fm,text="Stock",bg=cl_white,fg='black',font=font_h3_bold).grid(row=0,column=0,sticky=W,padx=spacing_comp)
     
     #search frame
-    search_home_entry = Entry(fm,bg=cl_white,fg='black',font=font_h5)
+    search_home_entry = Entry(fm,bg=cl_white,fg='black',font=font_h5,textvariable=search_var)
     search_home_entry.grid(row=0,column=1, ipadx=long_entry,ipady=high_entry ,padx=spacing_comp, sticky=E) #Spy Gb
-    search_button = Button(fm,image=search_icon)
+    search_button = Button(fm,image=search_icon,command=lambda: search_products(search_var.get(), user))
     search_button.grid(row=0, column=1,padx=spacing_comp, sticky=E)
+    
     # add product
-    search_button = Button(fm,image=add_item_icon, text="add product",fg=cl_black,font=font_h5,compound=LEFT,padx=10, pady=5, bg=cl_white_gray)
-    search_button.grid(row=0, column=2,padx=spacing_comp, sticky=E)
-    # find product
-    product = retrieve_product(user[0])
-    # table product
-    tree = Treeview(fm, columns=columns, show="headings")
+    add_button = Button(fm,image=add_item_icon, text="add product",fg=cl_black,font=font_h5,compound=LEFT,padx=10, pady=5, bg=cl_white_gray,command=lambda: add_product_page(user))
+    add_button.grid(row=0, column=2,padx=spacing_comp, sticky=E)
+    
 
     # กำหนดหัวตาราง
     for col in columns:
-        tree.heading(col, text=col)
-    # กำหนดความกว้างคอลัมน์
-    for col in columns:
-        tree.column(col, width=50, anchor=W)
-    # เพิ่มข้อมูล
-    for row in product:
-        tree.insert("", END, value=row)
+        tree_order.heading(col, text=col)
+        tree_order.column(col, width=50, anchor=W)
     
-    context_menu = Menu(root, tearoff=0)
-    context_menu.add_command(label="edit")
-    context_menu.add_command(label="delete")
+    # เพิ่มข้อมูล
+    for row in order:
+        tree_order.insert("", END, value=row)
+    
+    # context_menu = Menu(root, tearoff=0)
+    # context_menu.add_command(label="edit", command=lambda: edit_product_page(tree_order))
+    # context_menu.add_command(label="delete", command=lambda: delete_product(tree_order))
     
     #ผูกการคลิกขวากับ show_context_menu
-    tree.bind("<Button-3>", lambda event: show_context_menu(event, tree, context_menu))
+    # tree_order.bind("<Button-3>", lambda event: show_context_menu(event, tree_order, context_menu))
     # # แสดง Treeview
-    tree.grid(row=1, columnspan=3, padx=spacing_comp, sticky=NSEW)
+    tree_order.grid(row=1, columnspan=3, padx=spacing_comp, sticky=NSEW)
+       
+def stock(user,product=None):
+    # - Layout Frame -
+    # frame outside
+    fm = Frame(fm_main, bg=cl_white)
+    fm.grid(row=0, column=0, sticky=NSEW)
+    
+    # config layout for scroll page
+    fm.grid_rowconfigure(0, weight=1)
+    fm.grid_columnconfigure((0), weight=1)
+    fm.grid_rowconfigure(1, weight=10)
+    
+    # variable
+    global  tree_stock
+    search_var = StringVar()
+    # find product
+    if product is None:
+        product = retrieve_product(user[0])
+    # table product
+    columns = ("id", "name", "price", "amount")
+    tree_stock = Treeview(fm, columns=columns, show="headings")
+    
+    # frame inside
+    #menubar
+    bar_home(user)
+    
+    #head name page
+    Label(fm,text="Stock",bg=cl_white,fg='black',font=font_h3_bold).grid(row=0,column=0,sticky=W,padx=spacing_comp)
+    
+    #search frame
+    search_home_entry = Entry(fm,bg=cl_white,fg='black',font=font_h5,textvariable=search_var)
+    search_home_entry.grid(row=0,column=1, ipadx=long_entry,ipady=high_entry ,padx=spacing_comp, sticky=E) #Spy Gb
+    search_button = Button(fm,image=search_icon,command=lambda: search_products(search_var.get(), user))
+    search_button.grid(row=0, column=1,padx=spacing_comp, sticky=E)
+    
+    # add product
+    add_button = Button(fm,image=add_item_icon, text="add product",fg=cl_black,font=font_h5,compound=LEFT,padx=10, pady=5, bg=cl_white_gray,command=lambda: add_product_page(user))
+    add_button.grid(row=0, column=2,padx=spacing_comp, sticky=E)
+    
+
+    # กำหนดหัวตาราง
+    for col in columns:
+        tree_stock.heading(col, text=col)
+        tree_stock.column(col, width=50, anchor=W)
+    
+    # เพิ่มข้อมูล
+    for row in product:
+        tree_stock.insert("", END, value=row)
+    
+    context_menu = Menu(root, tearoff=0)
+    context_menu.add_command(label="edit", command=lambda: edit_product_page(tree_stock))
+    context_menu.add_command(label="delete", command=lambda: delete_product(tree_stock))
+    
+    #ผูกการคลิกขวากับ show_context_menu
+    tree_stock.bind("<Button-3>", lambda event: show_context_menu(event, tree_stock, context_menu))
+    # # แสดง Treeview
+    tree_stock.grid(row=1, columnspan=3, padx=spacing_comp, sticky=NSEW)
     
 def profile(user):
     # - Layout Frame -
@@ -424,6 +404,7 @@ def profile(user):
     change_password_btn = Button(bot,text="change password",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: change_password_page(user))
     change_password_btn.grid(row=0,column=1, ipadx=50, ipady=5, padx=10)
 
+""" POP UP """
 def change_password_page(user):
     
     popup = Toplevel(fm_main, bg=cl_white)
@@ -437,11 +418,7 @@ def change_password_page(user):
     global change_password_entry, change_confirm_password_entry
     new_password = StringVar()
     confirm_password = StringVar()
-    user_id = user[0]
-    
-    #set scale of component
-    
-    
+    user_id = user[0]    
     # - component inside -
     
     Label(popup,text="new password : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=0,column=0,sticky='e')
@@ -454,6 +431,69 @@ def change_password_page(user):
     
     change_password_btn = Button(popup,text="submit",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: change_password(new_password.get(),confirm_password.get(),user_id))
     change_password_btn.grid(row=2,columnspan=2, ipadx=50, ipady=5, padx=10)
+    
+def edit_product_page(tree):
+    selected = tree.selection()
+    item = tree.item(selected, "values")
+    
+    popup = Toplevel(fm_main, bg=cl_white)
+    popup.title("Edit Product")
+    popup.geometry("500x200")
+    
+    popup.grid_rowconfigure((0,1,2,3), weight=1)
+    popup.grid_columnconfigure((0,1), weight=1)
+
+    #veriable
+    global name_edit_product_entry, price_edit_product_entry, amount_edit_product_entry
+    name_product = StringVar(value=item[1])
+    price_product = StringVar(value=item[2])
+    amount_product = StringVar(value=item[3])    
+    
+    # - component inside -
+    Label(popup,text="name : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=0,column=0,sticky='e')
+    name_edit_product_entry = Entry(popup,bg=cl_white_gray, textvariable = name_product)
+    name_edit_product_entry.grid(row=0,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
+    
+    Label(popup,text="price : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=1,column=0,sticky='e')
+    price_edit_product_entry = Entry(popup,bg=cl_white_gray, textvariable = price_product)
+    price_edit_product_entry.grid(row=1,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
+    
+    Label(popup,text="amount : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=2,column=0,sticky='e')
+    amount_edit_product_entry = Entry(popup,bg=cl_white_gray, textvariable = amount_product)
+    amount_edit_product_entry.grid(row=2,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
+    
+    edit_product_btn = Button(popup,text="submit",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: edit_product(name_product.get(),price_product.get(),amount_product.get(),item[0],user))
+    edit_product_btn.grid(row=3,columnspan=2, ipadx=50, ipady=5, padx=10)
+
+def add_product_page(user):
+    popup = Toplevel(fm_main, bg=cl_white)
+    popup.title("Add Product")
+    popup.geometry("500x200")
+    
+    popup.grid_rowconfigure((0,1,2,3), weight=1)
+    popup.grid_columnconfigure((0,1), weight=1)
+
+    #veriable
+    global name_add_product_entry, price_add_product_entry, amount_add_product_entry
+    name_product = StringVar()
+    price_product = StringVar()
+    amount_product = StringVar()
+    
+    # - component inside -
+    Label(popup,text="name : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=0,column=0,sticky='e')
+    name_add_product_entry = Entry(popup,bg=cl_white_gray, textvariable = name_product)
+    name_add_product_entry.grid(row=0,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
+    
+    Label(popup,text="price : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=1,column=0,sticky='e')
+    price_add_product_entry = Entry(popup,bg=cl_white_gray, textvariable = price_product)
+    price_add_product_entry.grid(row=1,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
+    
+    Label(popup,text="amount : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=2,column=0,sticky='e')
+    amount_add_product_entry = Entry(popup,bg=cl_white_gray, textvariable = amount_product)
+    amount_add_product_entry.grid(row=2,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
+    
+    add_btn = Button(popup,text="submit",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: add_product(name_product.get(),price_product.get(),amount_product.get(),user))
+    add_btn.grid(row=3,columnspan=2, ipadx=50, ipady=5, padx=10)
 
 """ BACK END """
 def login_click(username,password) :
@@ -606,8 +646,119 @@ def show_context_menu(event, tree, context_menu):
     if selected_item:
         tree.selection_set(selected_item)
         context_menu.post(event.x_root, event.y_root)
+        
+def delete_product(tree):
+    selected = tree.selection()
+    if selected:
+        item = tree.item(selected, "values")
+        confirm = messagebox.askyesno("Delete", f"ต้องการลบ: {item[1]} หรือไม่?")
+        if confirm:
+            conn, cursor = db_connection()
+            cursor.execute("DELETE FROM products WHERE product_id=?", (item[0],))
+            conn.commit()
+            conn.close()
+            tree.delete(selected)
+            messagebox.showinfo("Delete", "ลบข้อมูลสำเร็จแล้ว!")
+            
+def edit_product(name,price_txt,amount_txt,product_id,user):
+    if name == "" :
+        messagebox.showwarning("Admin:","Please enter name product")
+        name_edit_product_entry.focus_force()  
+    else :
+        if price_txt == "" :
+            messagebox.showwarning("Admin:","Please enter price product")
+            price_edit_product_entry.focus_force() 
+        else :
+            try :
+                price = int(price_txt)
+            except ValueError:
+                messagebox.showerror("Admin:", "Price must be an integer number")
+                price_edit_product_entry.focus_force()
+                return
+            
+            if amount_txt == "" :
+                messagebox.showwarning("Admin:","Please enter amount product")    
+                amount_edit_product_entry.focus_force() 
+            else :
+                try :
+                    amount = int(amount_txt)
+                except ValueError:
+                    messagebox.showerror("Admin:","Amount must be an integer product")
+                    amount_edit_product_entry.focus_force()
+                    return
+                sql = 'update products set name = ? , price = ?, stock_quantity = ? where product_id = ?'
+                cursor.execute(sql, (name, price, amount, product_id))
+                conn.commit()
+                if cursor.rowcount > 0:
+                    messagebox.showinfo("Edit Product", "Edit product successfully.")
+                    stock(user)
+                else:
+                    messagebox.showwarning("Edit Product", "No data changes.")
+                    name_edit_product_entry.focus_force() 
+def add_product(name,price_txt,amount_txt,user):
+    if name == "" :
+        messagebox.showwarning("Admin:","Please enter name product") 
+        name_add_product_entry.focus_force() 
+    else :
+        if price_txt == "" :
+            messagebox.showwarning("Admin:","Please enter price product")
+            price_add_product_entry.focus_force() 
+        else :
+            try :
+                price = int(price_txt)
+            except ValueError:
+                messagebox.showerror("Admin:", "Price must be an integer number")
+                price_add_product_entry.focus_force()
+                return
+            if amount_txt == "" :
+                messagebox.showwarning("Admin:","Please enter amount product")
+                amount_add_product_entry.focus_force()     
+            else :
+                try :
+                    amount = int(amount_txt)
+                except ValueError:
+                    messagebox.showerror("Admin:","Amount must be an integer product")
+                    amount_add_product_entry.focus_force()
+                    return
+                sql = "insert into products (name, price, stock_quantity, user_id) values ( ?, ?, ?, ?)"
+                cursor.execute(sql, (name, price, amount, user[0]))
+                conn.commit()
+                if cursor.rowcount > 0:
+                    messagebox.showinfo("Add Product", "Add product successfully.")
+                    stock(user)
+                else:
+                    messagebox.showwarning("Add Product", "No data changes.")
+                    name_add_product_entry.focus_force() 
 
-
+def search_products(search_text, user):
+    # ล้างข้อมูลเก่าใน treeview
+    search = f'%{search_text}%'
+    
+    for item in tree_stock.get_children():
+        tree_stock.delete(item)
+        
+    # ถ้าไม่ได้กรอกอะไร ให้ดึงทั้งหมด
+    if search_text == "":
+        sql = "SELECT product_id, name, price, stock_quantity FROM products WHERE user_id = ?"
+        cursor.execute(sql, (user[0],))
+    else :
+        sql = """
+        SELECT product_id, name, price, stock_quantity
+        FROM products
+        WHERE user_id = ?
+        AND (
+            product_id LIKE ?
+            OR name LIKE ?
+            OR price LIKE ?
+            OR stock_quantity LIKE ?
+            )
+            """
+        cursor.execute(sql, (user[0], search, search, search, search))
+    
+    results = cursor.fetchall()
+    for row in results:
+        tree_stock.insert("", END, values=row)
+        
 # --------------------------------------------------------------------------------------------------------
 root = create_window()
 fm_main = create_layout(root)
