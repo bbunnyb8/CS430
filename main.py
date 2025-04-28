@@ -1,8 +1,10 @@
 from tkinter import *
 import sqlite3
-from tkinter import messagebox
-from tkinter.ttk import Combobox, Treeview
+from tkinter import messagebox, Menu
+from tkinter.ttk import Treeview
 from connect import *
+from config import *
+
 """ FRONT END """
 def create_window():
     root = Tk()
@@ -90,7 +92,8 @@ def login():
     password_login_entry.grid(row=1, column=1, sticky='w', ipady=high_entry, ipadx=long_entry, padx=spacing_comp)
 
     # bot frame 
-    Button(bot,text="login",bg=cl_red,fg=cl_white,font=font_h3_bold, command=lambda:login_click(username_info.get(),password_info.get())).grid(row=0,column=0, ipadx=50, ipady=5)
+    button_login = Button(bot,text="login",bg=cl_red,fg=cl_white,font=font_h3_bold, command=lambda: login_click(username_info.get(),password_info.get()))
+    button_login.grid(row=0,column=0, ipadx=50, ipady=5)
         
 # Register page
 def register():
@@ -157,9 +160,81 @@ def register():
     confirm_password_register_entry.grid(row=3,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
 
     # bot frame 
-    Button(bot,text="register",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda:  register_click(name_regis.get(), username_regis.get(), password_regis.get(), confirm_password_regis.get())).grid(row=0,column=0, ipadx=50, ipady=5)
+    button_register = Button(bot,text="register",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: register_click(name_regis.get(), username_regis.get(), password_regis.get(), confirm_password_regis.get()))
+    button_register.grid(row=0,column=0, ipadx=50, ipady=5)
 
 def home(user):
+    # - Layout Frame -
+    # frame outside
+    fm = Frame(fm_main, bg=cl_white)
+    fm.grid(row=0, column=0, sticky=NSEW)
+    
+    # config layout for scroll page
+    fm.grid_rowconfigure(0, weight=4)
+    fm.grid_columnconfigure(0, weight=4)
+    fm.grid_columnconfigure(1, weight=3)
+    
+    """
+    layout ส่วนแสดงสินค้า มี 2 ส่วน ส่วนแรกเป็นชื่อหน้าต่างที่กำลังทำงานอยู่ และปุ่มค้นหา 
+    ส่วนที่สอง เป็นตารางแสดงรายการสินค้า
+    """
+    fm_show_product = Frame(fm, bg=cl_white)
+    fm_show_product.grid(row=0, column=0, sticky=NSEW)
+    fm_show_product.grid_rowconfigure(0, weight=1)
+    fm_show_product.grid_rowconfigure(1, weight=10)
+    fm_show_product.grid_columnconfigure((0,1), weight=1)
+    
+    #layout รายการที่เลือก
+    fm_select_product = Frame(fm, bg="red")
+    fm_select_product.grid(row=0, column=1, sticky=NSEW)
+    
+    #veriable
+     
+    # name_regis = StringVar()
+    # username_regis = StringVar()
+    # password_regis = StringVar()
+    # confirm_password_regis = StringVar()
+    
+    #set scale of component
+    columns = ("id", "name", "price", "amount")
+    
+    # frame inside
+    #menubar
+    bar_home(user)
+    
+    #head name page
+    Label(fm_show_product,text="Home",bg=cl_white,fg='black',font=font_h3_bold).grid(row=0,column=0,sticky=W,padx=spacing_comp)
+    
+    #search frame
+    search_home_entry = Entry(fm_show_product,bg=cl_white,fg='black',font=font_h5)
+    search_home_entry.grid(row=0,column=1, ipadx=long_entry,ipady=high_entry ,padx=spacing_comp, sticky=E) #Spy Gb
+    search_button = Button(fm_show_product,image=search_icon)
+    search_button.grid(row=0, column=1,padx=spacing_comp, sticky=E)
+    
+    product = retrieve_product(user[0])
+
+    # table product
+    tree = Treeview(fm_show_product, columns=columns, show="headings")
+
+    # กำหนดหัวตาราง
+    for col in columns:
+        tree.heading(col, text=col)
+    # กำหนดความกว้างคอลัมน์
+    for col in columns:
+        tree.column(col, width=50, anchor=W)
+    # เพิ่มข้อมูล
+    for row in product:
+        tree.insert("", END, value=row)
+    
+    context_menu = Menu(root, tearoff=0)
+    context_menu.add_command(label="add cart")
+    #ผูกการคลิกขวากับ show_context_menu
+    tree.bind("<Button-3>", lambda event: show_context_menu(event, tree, context_menu))
+    # # แสดง Treeview
+    tree.grid(row=1, columnspan=2, padx=spacing_comp, sticky=NSEW)
+    
+
+def order(user):
     # - Layout Frame -
     # frame outside
     fm = Frame(fm_main, bg=cl_white)
@@ -185,15 +260,14 @@ def home(user):
     fm_select_product.grid(row=0, column=1, sticky=NSEW)
     
     #veriable
-    
-    
+     
     # name_regis = StringVar()
     # username_regis = StringVar()
     # password_regis = StringVar()
     # confirm_password_regis = StringVar()
     
     #set scale of component
-    
+    columns = ("id", "name", "price", "amount")
     
     # frame inside
     #menubar
@@ -208,61 +282,91 @@ def home(user):
     search_button = Button(fm_show_product,image=search_icon)
     search_button.grid(row=0, column=1,padx=spacing_comp, sticky=E)
     
-    
+    product = retrieve_product(user[0])
 
     # table product
-    tree = Treeview(fm_show_product, columns=("id", "name", "price", "amount"), show="headings")
+    tree = Treeview(fm_show_product, columns=columns, show="headings")
 
     # กำหนดหัวตาราง
-    tree.heading("id", text="id")
-    tree.heading("name", text="name")
-    tree.heading("price", text="price")
-    tree.heading("amount", text="amount")
-    
-
+    for col in columns:
+        tree.heading(col, text=col)
     # กำหนดความกว้างคอลัมน์
-    tree.column("id", width=150, anchor=W)
-    tree.column("name", width=150, anchor=W)
-    tree.column("price", width=150, anchor=W)
-    tree.column("amount", width=150, anchor=W)
-
+    for col in columns:
+        tree.column(col, width=50, anchor=W)
     # เพิ่มข้อมูล
+    for row in product:
+        tree.insert("", END, value=row)
     
-    tree.insert("", END, value=( 1, "cake",20,16))
-    
-
+    context_menu = Menu(root, tearoff=0)
+    context_menu.add_command(label="add cart")
+    #ผูกการคลิกขวากับ show_context_menu
+    tree.bind("<Button-3>", lambda event: show_context_menu(event, tree, context_menu))
     # # แสดง Treeview
     tree.grid(row=1, columnspan=2, padx=spacing_comp, sticky=NSEW)
-    
-
-    
-def order(user):
-     # - Layout Frame -
-    # frame outside
-    fm = Frame(fm_main, bg=cl_white, padx=295, pady=172)
-    fm.grid(row=0, column=0, sticky=NSEW)
-    
-    # config layout for scroll page
-    fm.grid_rowconfigure((0,1,2), weight=1)
-    fm.grid_columnconfigure((0,1), weight=1)
-    
-    
-    #menubar
-    bar_home(user)
        
 def stock(user):
-     # - Layout Frame -
+    # - Layout Frame -
     # frame outside
-    fm = Frame(fm_main, bg=cl_white, padx=295, pady=172)
+    fm = Frame(fm_main, bg=cl_white)
     fm.grid(row=0, column=0, sticky=NSEW)
     
     # config layout for scroll page
-    fm.grid_rowconfigure((0,1,2), weight=1)
-    fm.grid_columnconfigure((0,1), weight=1)
+    fm.grid_rowconfigure(0, weight=1)
+    fm.grid_columnconfigure((0), weight=1)
+    fm.grid_rowconfigure(1, weight=10)
+    
+
+    #layout รายการที่เลือก
     
     
+    #veriable
+     
+    # name_regis = StringVar()
+    # username_regis = StringVar()
+    # password_regis = StringVar()
+    # confirm_password_regis = StringVar()
+    
+    #set scale of component
+    columns = ("id", "name", "price", "amount")
+    
+    # frame inside
     #menubar
     bar_home(user)
+    
+    #head name page
+    Label(fm,text="Stock",bg=cl_white,fg='black',font=font_h3_bold).grid(row=0,column=0,sticky=W,padx=spacing_comp)
+    
+    #search frame
+    search_home_entry = Entry(fm,bg=cl_white,fg='black',font=font_h5)
+    search_home_entry.grid(row=0,column=1, ipadx=long_entry,ipady=high_entry ,padx=spacing_comp, sticky=E) #Spy Gb
+    search_button = Button(fm,image=search_icon)
+    search_button.grid(row=0, column=1,padx=spacing_comp, sticky=E)
+    # add product
+    search_button = Button(fm,image=add_item_icon, text="add product",fg=cl_black,font=font_h5,compound=LEFT,padx=10, pady=5, bg=cl_white_gray)
+    search_button.grid(row=0, column=2,padx=spacing_comp, sticky=E)
+    # find product
+    product = retrieve_product(user[0])
+    # table product
+    tree = Treeview(fm, columns=columns, show="headings")
+
+    # กำหนดหัวตาราง
+    for col in columns:
+        tree.heading(col, text=col)
+    # กำหนดความกว้างคอลัมน์
+    for col in columns:
+        tree.column(col, width=50, anchor=W)
+    # เพิ่มข้อมูล
+    for row in product:
+        tree.insert("", END, value=row)
+    
+    context_menu = Menu(root, tearoff=0)
+    context_menu.add_command(label="edit")
+    context_menu.add_command(label="delete")
+    
+    #ผูกการคลิกขวากับ show_context_menu
+    tree.bind("<Button-3>", lambda event: show_context_menu(event, tree, context_menu))
+    # # แสดง Treeview
+    tree.grid(row=1, columnspan=3, padx=spacing_comp, sticky=NSEW)
     
 def profile(user):
     # - Layout Frame -
@@ -352,13 +456,6 @@ def change_password_page(user):
     change_password_btn.grid(row=2,columnspan=2, ipadx=50, ipady=5, padx=10)
 
 """ BACK END """
-
-def db_connection() :
-    db_path = 'database/Be_Lune.db'
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    return conn,cursor
-
 def login_click(username,password) :
     # Is username blank?
     if username == "" :
@@ -462,25 +559,25 @@ def update_profile(name, username, user_id):
                     user = retrieve_user(user_id)
                     profile(user)
                 else:
-                    messagebox.showwarning("Update Profile", "No data changes.")
-                    
+                    messagebox.showwarning("Update Profile", "No data changes.")               
 def retrieve_user(user_id):
     sql = "select * from users where user_id = ?"
     cursor.execute(sql, [user_id])
     user = cursor.fetchone()
+    conn.close
     return user
 def retrieve_product(user_id):
     sql = "select * from products where user_id = ?"
     cursor.execute(sql, [user_id])
-    product = cursor.fetchone()
+    product = cursor.fetchall()
+    conn.close
     return product
 def retrieve_order(user_id):
     sql = "select * from orders where user_id = ?"
     cursor.execute(sql, [user_id])
-    order = cursor.fetchone()
+    order = cursor.fetchall()
+    conn.close
     return order
-
-
 
 def change_password(new_password, confirm_password, user_id):
     if new_password == "" :
@@ -504,35 +601,20 @@ def change_password(new_password, confirm_password, user_id):
             else :
                 messagebox.showwarning("Admin:","Your new password and confirmation do not match. Kindly confirm your password again")
                 change_confirm_password_entry.focus_force() 
+def show_context_menu(event, tree, context_menu):
+    selected_item = tree.identify_row(event.y)
+    if selected_item:
+        tree.selection_set(selected_item)
+        context_menu.post(event.x_root, event.y_root)
+
 
 # --------------------------------------------------------------------------------------------------------
-# set scale 
-long_entry = 80
-high_entry = 4
-spacing_comp = 10
-
-# set font
-font_h5 = ("Inter",12)
-font_h4 = ("Inter",14)
-font_h3 = ("Inter",16)
-font_h3_bold = ("Inter",16,"bold")
-font_h2 = ("Inter",18)
-font_h2_bold = ("Inter",18,"bold")
-font_h1 = ("Inter",20)
-font_h1_bold = ("Inter",20,"bold")
-
-#set color
-cl_white = "#ffffff"
-cl_black = "#000000"
-cl_red = "#B12937"
-cl_gray = "#858585"
-cl_white_gray ="#F3F3F3"
-
 root = create_window()
 fm_main = create_layout(root)
 conn,cursor = db_connection()
 
 # - Spy -
+
 
 # - img -
 logo_img = PhotoImage(file="img/logo_full.png").subsample(4,4)
@@ -546,11 +628,11 @@ search_icon = PhotoImage(file="img/search.png")
 # admin run
 sql = "select * from users where user_id = 1"
 cursor.execute(sql)
-user = cursor.fetchone()    
+user = cursor.fetchone()   
 
 
 # - RUN -
 
-profile(user)
+stock(user)
 
 root.mainloop()
