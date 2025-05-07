@@ -196,6 +196,7 @@ def home(user):
     # confirm_password_regis = StringVar()
     
     #set scale of component
+    search_var = StringVar()
     columns = ("id", "name", "price", "amount")
     
     # frame inside
@@ -206,9 +207,9 @@ def home(user):
     Label(fm_show_product,text="Home",bg=cl_white,fg='black',font=font_h3_bold).grid(row=0,column=0,sticky=W,padx=spacing_comp)
     
     #search frame
-    search_home_entry = Entry(fm_show_product,bg=cl_white,fg='black',font=font_h5)
+    search_home_entry = Entry(fm_show_product,bg=cl_white,fg='black',font=font_h5,textvariable=search_var)
     search_home_entry.grid(row=0,column=1, ipadx=long_entry,ipady=high_entry ,padx=spacing_comp, sticky=E) #Spy Gb
-    search_button = Button(fm_show_product,image=search_icon)
+    search_button = Button(fm_show_product,image=search_icon,command=lambda: search_products(search_var.get(), user))
     search_button.grid(row=0, column=1,padx=spacing_comp, sticky=E)
     
     product = retrieve_product(user[0])
@@ -260,19 +261,14 @@ def order(user,order=None):
     bar_home(user)
     
     #head name page
-    Label(fm,text="Stock",bg=cl_white,fg='black',font=font_h3_bold).grid(row=0,column=0,sticky=W,padx=spacing_comp)
+    Label(fm,text="Order",bg=cl_white,fg='black',font=font_h3_bold).grid(row=0,column=0,sticky=W,padx=spacing_comp)
     
     #search frame
     search_home_entry = Entry(fm,bg=cl_white,fg='black',font=font_h5,textvariable=search_var)
     search_home_entry.grid(row=0,column=1, ipadx=long_entry,ipady=high_entry ,padx=spacing_comp, sticky=E) #Spy Gb
-    search_button = Button(fm,image=search_icon,command=lambda: search_products(search_var.get(), user))
+    search_button = Button(fm,image=search_icon,command=lambda: search_order(search_var.get(), user))
     search_button.grid(row=0, column=1,padx=spacing_comp, sticky=E)
     
-    # add product
-    add_button = Button(fm,image=add_item_icon, text="add product",fg=cl_black,font=font_h5,compound=LEFT,padx=10, pady=5, bg=cl_white_gray,command=lambda: add_product_page(user))
-    add_button.grid(row=0, column=2,padx=spacing_comp, sticky=E)
-    
-
     # กำหนดหัวตาราง
     for col in columns:
         tree_order.heading(col, text=col)
@@ -282,12 +278,12 @@ def order(user,order=None):
     for row in order:
         tree_order.insert("", END, value=row)
     
-    # context_menu = Menu(root, tearoff=0)
-    # context_menu.add_command(label="edit", command=lambda: edit_product_page(tree_order))
-    # context_menu.add_command(label="delete", command=lambda: delete_product(tree_order))
+    context_menu = Menu(root, tearoff=0)
+    context_menu.add_command(label="info", command=lambda: info_order_page(tree_order))
+    context_menu.add_command(label="delete", command=lambda: delete_order(tree_order))
     
     #ผูกการคลิกขวากับ show_context_menu
-    # tree_order.bind("<Button-3>", lambda event: show_context_menu(event, tree_order, context_menu))
+    tree_order.bind("<Button-3>", lambda event: show_context_menu(event, tree_order, context_menu))
     # # แสดง Treeview
     tree_order.grid(row=1, columnspan=3, padx=spacing_comp, sticky=NSEW)
        
@@ -495,6 +491,52 @@ def add_product_page(user):
     add_btn = Button(popup,text="submit",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: add_product(name_product.get(),price_product.get(),amount_product.get(),user))
     add_btn.grid(row=3,columnspan=2, ipadx=50, ipady=5, padx=10)
 
+def info_order_page(tree):
+    selected = tree.selection()
+    item = tree.item(selected, "values")
+    
+    popup = Toplevel(fm_main, bg=cl_white)
+    popup.title("info order")
+    popup.geometry("500x500")
+    popup.grid_rowconfigure((0), weight=4)
+    popup.grid_rowconfigure((1,2), weight=1)
+    popup.grid_columnconfigure((0,1), weight=1)
+
+    #veriable
+    global tree_order_info
+    
+    order_item = retrieve_order_item(item[0])
+    for row in order_item:
+        value = row[2]  # ดึง column index ที่ 2
+        product = retrieve_product_order(value)
+        
+    print(product)
+    columns = ("name", "amount", "price","total price")
+    tree_order_info = Treeview(popup, columns=columns, show="headings")
+    # - component inside -
+    for col in columns:
+        tree_order_info.heading(col, text=col)
+        tree_order_info.column(col, width=20, anchor=W)
+    
+    for row in order_item:
+        value = row[2]  # ดึง column index ที่ 2
+        product = retrieve_product_order(value)
+        
+        row_data = (
+            product[1],
+            row[3],
+            product[2],
+            row[4]
+        )
+        tree_order_info.insert("", END, value=row_data)
+    
+    tree_order_info.grid(row=0, columnspan=2, padx=spacing_comp,pady=spacing_comp, sticky=NSEW)
+    
+    
+    Label(popup,text=f"Total Amount : {item[1]}",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=1,columnspan=2,sticky='w', padx=spacing_comp)
+    Label(popup,text=f"Total Price : {item[2]}",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=2,columnspan=2,sticky='w', padx=spacing_comp)
+    
+    
 """ BACK END """
 def login_click(username,password) :
     # Is username blank?
@@ -604,19 +646,31 @@ def retrieve_user(user_id):
     sql = "select * from users where user_id = ?"
     cursor.execute(sql, [user_id])
     user = cursor.fetchone()
-    conn.close
+    
     return user
 def retrieve_product(user_id):
     sql = "select * from products where user_id = ?"
     cursor.execute(sql, [user_id])
     product = cursor.fetchall()
-    conn.close
+    
+    return product
+def retrieve_product_order(product_id):
+    sql = "select * from products where product_id = ?"
+    cursor.execute(sql, [product_id])
+    product = cursor.fetchone()
+   
     return product
 def retrieve_order(user_id):
     sql = "select * from orders where user_id = ?"
     cursor.execute(sql, [user_id])
     order = cursor.fetchall()
-    conn.close
+    
+    return order
+def retrieve_order_item(order_id):
+    sql = "select * from order_items where order_id = ?"
+    cursor.execute(sql, [order_id])
+    order = cursor.fetchall()
+    
     return order
 
 def change_password(new_password, confirm_password, user_id):
@@ -758,7 +812,57 @@ def search_products(search_text, user):
     results = cursor.fetchall()
     for row in results:
         tree_stock.insert("", END, values=row)
+
+def delete_order(tree):
+    selected = tree.selection()
+    if selected:
+        item = tree.item(selected, "values")
+        confirm = messagebox.askyesno("Delete", f"ต้องการคำสั่งซื้อ: {item[1]} หรือไม่ ?")
+        if confirm:
+            conn, cursor = db_connection()
+            order_id = item[0]
+
+            # ลบ order_item ที่มี product_id นี้ก่อน
+            cursor.execute("DELETE FROM order_items WHERE order_id = ?", (order_id,))
+
+            # ลบ order ที่ไม่มี order_item คงเหลือ
+            cursor.execute("""
+                DELETE FROM orders
+                WHERE order_id NOT IN (
+                    SELECT DISTINCT order_id FROM order_items
+                )
+            """)
+            conn.commit()
+            conn.close()
+
+            tree.delete(selected)
+            messagebox.showinfo("Delete", "ลบคำสั่งซื้อเรียบร้อยแล้ว!")
+
+def search_order(search_text, user):
+    # ล้างข้อมูลเก่าใน treeview
+    search = f'%{search_text}%'
+    
+    for item in tree_order.get_children():
+        tree_order.delete(item)
         
+    # ถ้าไม่ได้กรอกอะไร ให้ดึงทั้งหมด
+    if search_text == "":
+        sql = "SELECT order_id, quantity , total_price FROM orders WHERE user_id = ?"
+        cursor.execute(sql, (user[0],))
+    else :
+        sql = """
+        SELECT order_id, quantity , total_price
+        FROM orders
+        WHERE user_id = ?
+        AND (
+            order_id LIKE ?
+            )
+            """
+        cursor.execute(sql, (user[0], search))
+    
+    results = cursor.fetchall()
+    for row in results:
+        tree_order.insert("", END, values=row)    
 # --------------------------------------------------------------------------------------------------------
 root = create_window()
 fm_main = create_layout(root)
@@ -784,6 +888,6 @@ user = cursor.fetchone()
 
 # - RUN -
 
-stock(user)
+home(user)
 
 root.mainloop()
