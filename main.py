@@ -8,7 +8,7 @@ from config import *
 """ FRONT END """
 def create_window():
     root = Tk()
-    root.title("POS : Be Lune")
+    root.title("Back office : Be Lune")
     root.geometry("1194x834")
     root.configure(bg=cl_white)
     root.grid_rowconfigure(0, weight=1)
@@ -33,7 +33,6 @@ def bar_login():
 def bar_home(user):
     menu_bar = Menu(root, tearoff=0)
     menu_bar.add_command(label='Be Lune') 
-    menu_bar.add_command(label='home', command=lambda: home(user)) 
     menu_bar.add_command(label='order', command=lambda: order(user))
     menu_bar.add_command(label='stock', command=lambda: stock(user))
     menu_bar.add_command(label='profile', command=lambda: profile(user))
@@ -163,77 +162,6 @@ def register():
     button_register = Button(bot,text="register",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: register_click(name_regis.get(), username_regis.get(), password_regis.get(), confirm_password_regis.get()))
     button_register.grid(row=0,column=0, ipadx=50, ipady=5)
 
-def home(user):
-    # - Layout Frame -
-    # frame outside
-    fm = Frame(fm_main, bg=cl_white)
-    fm.grid(row=0, column=0, sticky=NSEW)
-    
-    # config layout for scroll page
-    fm.grid_rowconfigure(0, weight=4)
-    fm.grid_columnconfigure(0, weight=4)
-    fm.grid_columnconfigure(1, weight=3)
-    
-    """
-    layout ส่วนแสดงสินค้า มี 2 ส่วน ส่วนแรกเป็นชื่อหน้าต่างที่กำลังทำงานอยู่ และปุ่มค้นหา 
-    ส่วนที่สอง เป็นตารางแสดงรายการสินค้า
-    """
-    fm_show_product = Frame(fm, bg=cl_white)
-    fm_show_product.grid(row=0, column=0, sticky=NSEW)
-    fm_show_product.grid_rowconfigure(0, weight=1)
-    fm_show_product.grid_rowconfigure(1, weight=10)
-    fm_show_product.grid_columnconfigure((0,1), weight=1)
-    
-    #layout รายการที่เลือก
-    fm_select_product = Frame(fm, bg="red")
-    fm_select_product.grid(row=0, column=1, sticky=NSEW)
-    
-    #veriable
-     
-    # name_regis = StringVar()
-    # username_regis = StringVar()
-    # password_regis = StringVar()
-    # confirm_password_regis = StringVar()
-    
-    #set scale of component
-    search_var = StringVar()
-    columns = ("id", "name", "price", "amount")
-    
-    # frame inside
-    #menubar
-    bar_home(user)
-    
-    #head name page
-    Label(fm_show_product,text="Home",bg=cl_white,fg='black',font=font_h3_bold).grid(row=0,column=0,sticky=W,padx=spacing_comp)
-    
-    #search frame
-    search_home_entry = Entry(fm_show_product,bg=cl_white,fg='black',font=font_h5,textvariable=search_var)
-    search_home_entry.grid(row=0,column=1, ipadx=long_entry,ipady=high_entry ,padx=spacing_comp, sticky=E) #Spy Gb
-    search_button = Button(fm_show_product,image=search_icon,command=lambda: search_products(search_var.get(), user))
-    search_button.grid(row=0, column=1,padx=spacing_comp, sticky=E)
-    
-    product = retrieve_product(user[0])
-
-    # table product
-    tree = Treeview(fm_show_product, columns=columns, show="headings")
-
-    # กำหนดหัวตาราง
-    for col in columns:
-        tree.heading(col, text=col)
-    # กำหนดความกว้างคอลัมน์
-    for col in columns:
-        tree.column(col, width=50, anchor=W)
-    # เพิ่มข้อมูล
-    for row in product:
-        tree.insert("", END, value=row)
-    
-    context_menu = Menu(root, tearoff=0)
-    context_menu.add_command(label="add cart")
-    #ผูกการคลิกขวากับ show_context_menu
-    tree.bind("<Button-3>", lambda event: show_context_menu(event, tree, context_menu))
-    # # แสดง Treeview
-    tree.grid(row=1, columnspan=2, padx=spacing_comp, sticky=NSEW)
-    
 
 def order(user,order=None):
     # - Layout Frame -
@@ -556,7 +484,7 @@ def login_click(username,password) :
             if user :
                 messagebox.showinfo("Admin:","Login Successfully")
                 print(user)
-                home(user)
+                order(user)
             else :
                 messagebox.showwarning("Admin:","Username not found\n Please register before Login")
                 password_login_entry.select_range(0,END)
@@ -888,6 +816,6 @@ user = cursor.fetchone()
 
 # - RUN -
 
-home(user)
+order(user)
 
 root.mainloop()
