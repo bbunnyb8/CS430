@@ -809,13 +809,13 @@ search_icon = PhotoImage(file="img/search.png")
 
 
 # admin run
-sql = "select * from users where user_id = 1"
-cursor.execute(sql)
-user = cursor.fetchone()   
+# sql = "select * from users where user_id = 1"
+# cursor.execute(sql)
+# user = cursor.fetchone()   
 
 
 # - RUN -
 
-order(user)
+login()
 
 root.mainloop()
