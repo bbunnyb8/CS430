@@ -264,7 +264,7 @@ def stock(user,product=None):
         tree_stock.insert("", END, value=row)
     
     context_menu = Menu(root, tearoff=0)
-    context_menu.add_command(label="edit", command=lambda: edit_product_page(tree_stock))
+    context_menu.add_command(label="edit", command=lambda: edit_product_page(tree_stock,user))
     context_menu.add_command(label="delete", command=lambda: delete_product(tree_stock))
     
     #ผูกการคลิกขวากับ show_context_menu
@@ -356,7 +356,7 @@ def change_password_page(user):
     change_password_btn = Button(popup,text="submit",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: change_password(new_password.get(),confirm_password.get(),user_id))
     change_password_btn.grid(row=2,columnspan=2, ipadx=50, ipady=5, padx=10)
     
-def edit_product_page(tree):
+def edit_product_page(tree,user):
     selected = tree.selection()
     item = tree.item(selected, "values")
     
