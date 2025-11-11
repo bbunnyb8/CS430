@@ -328,15 +328,15 @@ def profile(user):
     change_password_btn = Button(bot,text="change password",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: change_password_page(user))
     change_password_btn.grid(row=0,column=1, ipadx=50, ipady=5, padx=10)
 
-""" POP UP """
+""" Modal """
 def change_password_page(user):
     
-    popup = Toplevel(fm_main, bg=cl_white)
-    popup.title("Change Password")
-    popup.geometry("500x200")
+    modal = Toplevel(fm_main, bg=cl_white)
+    modal.title("Change Password")
+    modal.geometry("500x200")
     
-    popup.grid_rowconfigure((0,1,2), weight=1)
-    popup.grid_columnconfigure((0,1), weight=1)
+    modal.grid_rowconfigure((0,1,2), weight=1)
+    modal.grid_columnconfigure((0,1), weight=1)
 
     #global veriable
     global change_password_entry, change_confirm_password_entry
@@ -345,27 +345,27 @@ def change_password_page(user):
     user_id = user[0]    
     # - component inside -
     
-    Label(popup,text="new password : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=0,column=0,sticky='e')
-    change_password_entry = Entry(popup,bg=cl_white_gray, textvariable = new_password)
+    Label(modal,text="new password : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=0,column=0,sticky='e')
+    change_password_entry = Entry(modal,bg=cl_white_gray, textvariable = new_password)
     change_password_entry.grid(row=0,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
     
-    Label(popup,text="confirm password : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=1,column=0,sticky='e')
-    change_confirm_password_entry = Entry(popup,bg=cl_white_gray, textvariable = confirm_password)
+    Label(modal,text="confirm password : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=1,column=0,sticky='e')
+    change_confirm_password_entry = Entry(modal,bg=cl_white_gray, textvariable = confirm_password)
     change_confirm_password_entry.grid(row=1,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
     
-    change_password_btn = Button(popup,text="submit",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: change_password(new_password.get(),confirm_password.get(),user_id))
+    change_password_btn = Button(modal,text="submit",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: change_password(new_password.get(),confirm_password.get(),user_id))
     change_password_btn.grid(row=2,columnspan=2, ipadx=50, ipady=5, padx=10)
     
 def edit_product_page(tree,user):
     selected = tree.selection()
     item = tree.item(selected, "values")
     
-    popup = Toplevel(fm_main, bg=cl_white)
-    popup.title("Edit Product")
-    popup.geometry("500x200")
+    modal = Toplevel(fm_main, bg=cl_white)
+    modal.title("Edit Product")
+    modal.geometry("500x200")
     
-    popup.grid_rowconfigure((0,1,2,3), weight=1)
-    popup.grid_columnconfigure((0,1), weight=1)
+    modal.grid_rowconfigure((0,1,2,3), weight=1)
+    modal.grid_columnconfigure((0,1), weight=1)
 
     #veriable
     global name_edit_product_entry, price_edit_product_entry, amount_edit_product_entry
@@ -374,28 +374,28 @@ def edit_product_page(tree,user):
     amount_product = StringVar(value=item[3])    
     
     # - component inside -
-    Label(popup,text="name : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=0,column=0,sticky='e')
-    name_edit_product_entry = Entry(popup,bg=cl_white_gray, textvariable = name_product)
+    Label(modal,text="name : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=0,column=0,sticky='e')
+    name_edit_product_entry = Entry(modal,bg=cl_white_gray, textvariable = name_product)
     name_edit_product_entry.grid(row=0,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
     
-    Label(popup,text="price : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=1,column=0,sticky='e')
-    price_edit_product_entry = Entry(popup,bg=cl_white_gray, textvariable = price_product)
+    Label(modal,text="price : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=1,column=0,sticky='e')
+    price_edit_product_entry = Entry(modal,bg=cl_white_gray, textvariable = price_product)
     price_edit_product_entry.grid(row=1,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
     
-    Label(popup,text="amount : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=2,column=0,sticky='e')
-    amount_edit_product_entry = Entry(popup,bg=cl_white_gray, textvariable = amount_product)
+    Label(modal,text="amount : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=2,column=0,sticky='e')
+    amount_edit_product_entry = Entry(modal,bg=cl_white_gray, textvariable = amount_product)
     amount_edit_product_entry.grid(row=2,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
     
-    edit_product_btn = Button(popup,text="submit",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: edit_product(name_product.get(),price_product.get(),amount_product.get(),item[0],user))
+    edit_product_btn = Button(modal,text="submit",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: edit_product(name_product.get(),price_product.get(),amount_product.get(),item[0],user))
     edit_product_btn.grid(row=3,columnspan=2, ipadx=50, ipady=5, padx=10)
 
 def add_product_page(user):
-    popup = Toplevel(fm_main, bg=cl_white)
-    popup.title("Add Product")
-    popup.geometry("500x200")
+    modal = Toplevel(fm_main, bg=cl_white)
+    modal.title("Add Product")
+    modal.geometry("500x200")
     
-    popup.grid_rowconfigure((0,1,2,3), weight=1)
-    popup.grid_columnconfigure((0,1), weight=1)
+    modal.grid_rowconfigure((0,1,2,3), weight=1)
+    modal.grid_columnconfigure((0,1), weight=1)
 
     #veriable
     global name_add_product_entry, price_add_product_entry, amount_add_product_entry
@@ -404,31 +404,31 @@ def add_product_page(user):
     amount_product = StringVar()
     
     # - component inside -
-    Label(popup,text="name : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=0,column=0,sticky='e')
-    name_add_product_entry = Entry(popup,bg=cl_white_gray, textvariable = name_product)
+    Label(modal,text="name : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=0,column=0,sticky='e')
+    name_add_product_entry = Entry(modal,bg=cl_white_gray, textvariable = name_product)
     name_add_product_entry.grid(row=0,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
     
-    Label(popup,text="price : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=1,column=0,sticky='e')
-    price_add_product_entry = Entry(popup,bg=cl_white_gray, textvariable = price_product)
+    Label(modal,text="price : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=1,column=0,sticky='e')
+    price_add_product_entry = Entry(modal,bg=cl_white_gray, textvariable = price_product)
     price_add_product_entry.grid(row=1,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
     
-    Label(popup,text="amount : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=2,column=0,sticky='e')
-    amount_add_product_entry = Entry(popup,bg=cl_white_gray, textvariable = amount_product)
+    Label(modal,text="amount : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=2,column=0,sticky='e')
+    amount_add_product_entry = Entry(modal,bg=cl_white_gray, textvariable = amount_product)
     amount_add_product_entry.grid(row=2,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
     
-    add_btn = Button(popup,text="submit",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: add_product(name_product.get(),price_product.get(),amount_product.get(),user))
+    add_btn = Button(modal,text="submit",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: add_product(name_product.get(),price_product.get(),amount_product.get(),user))
     add_btn.grid(row=3,columnspan=2, ipadx=50, ipady=5, padx=10)
 
 def info_order_page(tree):
     selected = tree.selection()
     item = tree.item(selected, "values")
     
-    popup = Toplevel(fm_main, bg=cl_white)
-    popup.title("info order")
-    popup.geometry("500x500")
-    popup.grid_rowconfigure((0), weight=4)
-    popup.grid_rowconfigure((1,2), weight=1)
-    popup.grid_columnconfigure((0,1), weight=1)
+    modal = Toplevel(fm_main, bg=cl_white)
+    modal.title("info order")
+    modal.geometry("500x500")
+    modal.grid_rowconfigure((0), weight=4)
+    modal.grid_rowconfigure((1,2), weight=1)
+    modal.grid_columnconfigure((0,1), weight=1)
 
     #veriable
     global tree_order_info
@@ -440,7 +440,7 @@ def info_order_page(tree):
         
     print(product)
     columns = ("name", "amount", "price","total price")
-    tree_order_info = Treeview(popup, columns=columns, show="headings")
+    tree_order_info = Treeview(modal, columns=columns, show="headings")
     # - component inside -
     for col in columns:
         tree_order_info.heading(col, text=col)
@@ -461,8 +461,8 @@ def info_order_page(tree):
     tree_order_info.grid(row=0, columnspan=2, padx=spacing_comp,pady=spacing_comp, sticky=NSEW)
     
     
-    Label(popup,text=f"Total Amount : {item[1]}",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=1,columnspan=2,sticky='w', padx=spacing_comp)
-    Label(popup,text=f"Total Price : {item[2]}",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=2,columnspan=2,sticky='w', padx=spacing_comp)
+    Label(modal,text=f"Total Amount : {item[1]}",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=1,columnspan=2,sticky='w', padx=spacing_comp)
+    Label(modal,text=f"Total Price : {item[2]}",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=2,columnspan=2,sticky='w', padx=spacing_comp)
     
     
 """ BACK END """
