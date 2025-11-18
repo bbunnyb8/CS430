@@ -38,7 +38,7 @@ def bar_home(user):
         menu_bar.add_command(label='catagory', command=lambda: profile(user))
         menu_bar.add_command(label='shelves', command=lambda: profile(user))
         menu_bar.add_command(label='userManagement', command=lambda: profile(user))
-        menu_bar.add_command(label='profile', command=lambda: profile(user))
+        menu_bar.add_command(label='profile', command=lambda: profileUser(user))
         menu_bar.add_command(label='log out', command=login) 
         root.configure(menu=menu_bar)
 
@@ -48,10 +48,11 @@ def bar_home(user):
         menu_bar.add_command(label='dashboard', command=lambda: order(user))
         borrow_menu.add_command(label='borrowing', command=lambda: stock(user)) 
         menu_bar.add_cascade(label='borrow', menu=borrow_menu)
-        menu_bar.add_command(label='books', command=lambda: stock(user))
-        menu_bar.add_command(label='catagory', command=lambda: profile(user))
+        menu_bar.add_command(label='history', command=lambda: stock(user))
+        menu_bar.add_command(label='books', command=lambda: profile(user))
+        menu_bar.add_command(label='category', command=lambda: profile(user))
         menu_bar.add_command(label='shelves', command=lambda: profile(user))
-        menu_bar.add_command(label='profile', command=lambda: profile(user))
+        menu_bar.add_command(label='profile', command=lambda: profileUser(user))
         menu_bar.add_command(label='log out', command=login) 
         root.configure(menu=menu_bar)
 
@@ -160,6 +161,134 @@ def shelves(user):
     fm.grid_columnconfigure(0, weight=1)
     bar_home(user)
 
+def history(user):
+    fm = Frame(fm_main, bg=cl_white)
+    fm.grid(row=0, column=0, sticky=NSEW)
+    for widget in fm.winfo_children():
+        widget.destroy()
+        
+    fm.grid_rowconfigure(0, weight=0) # แถว Search ไม่ต้องขยาย
+    fm.grid_rowconfigure(1, weight=1) # แถวตาราง ขยายเต็มที่
+    fm.grid_rowconfigure(2, weight=0) # แถวปุ่ม ไม่ต้องขยาย
+    fm.grid_columnconfigure(0, weight=1)
+    bar_home(user)
+
+def profileUser(user):
+    fm = Frame(fm_main, bg=cl_white)
+    fm.grid(row=0, column=0, sticky=NSEW)
+    
+    for widget in fm.winfo_children():
+        widget.destroy()
+        
+    fm.grid_rowconfigure(0, weight=0)
+    fm.grid_rowconfigure(1, weight=1)
+    fm.grid_rowconfigure(2, weight=0)
+    fm.grid_columnconfigure(0, weight=1)
+    
+    bar_home(user)
+
+    # 1. แกะข้อมูล User ปัจจุบัน (เพื่อเอาไปใส่ในช่องกรอก)
+    current_id = user[0]
+    
+    # สร้างตัวแปร StringVar สำหรับ Tkinter เพื่อรอรับค่าที่แก้ไข
+    v_username = StringVar(value=user[1])
+    v_password = StringVar(value=user[2])
+    v_firstname = StringVar(value=user[3])
+    v_lastname = StringVar(value=user[4])
+    v_email = StringVar(value=user[5])
+    v_tel = StringVar(value=user[6]) 
+    v_role = StringVar(value=user[7])
+
+    # --- ฟังก์ชันบันทึกข้อมูลลง Database ---
+    def save_profile():
+        try:
+            conn, cursor = db_connection()
+            sql = """
+                UPDATE user 
+                SET username=?, password=?, firstName=?, lastName=?, email=?, tel=?
+                WHERE userID=?
+            """
+            params = (
+                v_username.get(),
+                v_password.get(),
+                v_firstname.get().strip(), # strip() เพื่อลบช่องว่างท้ายคำถ้ามี
+                v_lastname.get().strip(),
+                v_email.get(),
+                v_tel.get(),
+                current_id # ใช้ ID เดิมเป็นตัวอ้างอิง (WHERE)
+            )
+            
+            cursor.execute(sql, params)
+            conn.commit()
+            
+            messagebox.showinfo("Success", "บันทึกข้อมูลเรียบร้อยแล้ว!")
+            
+            # (Optional) ถ้าอยากให้หน้าจอรีเฟรชข้อมูลใหม่ทันที อาจต้องมีการเรียก query ข้อมูลใหม่อีกรอบ
+            # หรือส่งค่าใหม่กลับไปที่ฟังก์ชัน profileUser(new_data_tuple)
+        except Exception as e:
+            messagebox.showerror("Error", f"เกิดข้อผิดพลาด: {e}")
+
+    def cancel_edit():
+        # คืนค่าในช่องกรอก ให้กลับไปเป็นค่าเริ่มต้นจากตัวแปร user
+        v_username.set(user[1])
+        v_password.set(user[2])
+        v_firstname.set(user[3])
+        v_lastname.set(user[4])
+        v_email.set(user[5])
+        v_tel.set(user[6])
+        # (ไม่ต้องแจ้งเตือนก็ได้ หรือจะแจ้งก็ได้ครับ)
+        # messagebox.showinfo("Cancelled", "คืนค่าข้อมูลเดิมเรียบร้อยแล้ว")
+
+    # --- สร้าง Layout ---
+    content_box = Frame(fm, bg=cl_white, padx=20, pady=20)
+    content_box.grid(row=1, column=0)
+
+    Label(content_box, text="Edit Profile", font=('Arial', 24, 'bold'), bg=cl_white, fg="#333333").pack(pady=(0, 20))
+
+    # Helper Function สร้างช่องกรอก
+    def create_input(label_text, text_var, is_password=False, is_readonly=False):
+        row_frame = Frame(content_box, bg=cl_white)
+        row_frame.pack(fill='x', pady=5)
+        
+        Label(row_frame, text=label_text, font=('Arial', 12, 'bold'), width=12, anchor='w', bg=cl_white).pack(side=LEFT)
+        
+        if is_readonly:
+            # ถ้าแก้ไขไม่ได้ ให้ใช้ Entry แต่ disable ไว้ หรือใช้ Label เหมือนเดิมก็ได้
+            ent = Entry(row_frame, textvariable=text_var, font=('Arial', 12), state='disabled', disabledbackground="#f0f0f0", disabledforeground="#555")
+        else:
+            # ถ้าแก้ไขได้
+            show_char = '*' if is_password else None
+            ent = Entry(row_frame, textvariable=text_var, font=('Arial', 12), show=show_char, bg="#f9f9f9", bd=1, relief=SOLID)
+            
+        ent.pack(side=LEFT, fill='x', expand=True, ipady=3)
+
+    # แสดงผลช่องต่างๆ
+    create_input("User ID :", StringVar(value=current_id), is_readonly=True) # แก้ไม่ได้
+    create_input("Role :", v_role, is_readonly=True)    # แก้ไม่ได้ (ปกติ User ไม่ควรแก้ Role เองได้)
+    
+    Frame(content_box, height=2, bd=1, relief=SUNKEN).pack(fill='x', pady=10) # เส้นคั่น
+
+    create_input("Username :", v_username)
+    create_input("Password :", v_password, is_password=False) # ใส่ True ถ้าอยากให้เป็น ****
+    create_input("First Name :", v_firstname)
+    create_input("Last Name :", v_lastname)
+    create_input("Email :", v_email)
+    create_input("Tel :", v_tel)
+
+    btn_frame = Frame(content_box, bg=cl_white)
+    btn_frame.pack(pady=20)
+
+    # ปุ่ม Save (สีเขียว)
+    btn_save = Button(content_box, text="Save", command=save_profile, 
+                  font=('Arial', 12, 'bold'), bg="#2ecc71", fg="white", 
+                  cursor="hand2", padx=20, pady=5, bd=0)
+    btn_save.pack(pady=(20, 5)) # เพิ่มระยะห่างด้านบน 20px, ด้านล่าง 5px
+
+    # ปุ่ม Cancel (สีแดง)
+    btn_cancel = Button(content_box, text="Cancel", command=cancel_edit, 
+                    font=('Arial', 12), bg="#e74c3c", fg="white", 
+                    cursor="hand2", padx=15, pady=5, bd=0)
+    btn_cancel.pack(pady=(5, 0)) # เพิ่มระยะห่างด้านบน 5px, ด้านล่าง 0px
 
 def userManagement(user):
     fm = Frame(fm_main, bg=cl_white)
@@ -201,8 +330,6 @@ def userManagement(user):
         keyword = entry_search.get()
 
         # Query ข้อมูลตามเงื่อนไข
-        conn = db_connection()
-        cursor = conn.cursor()
         sql = f"SELECT * FROM user WHERE {col_name} LIKE ?"
         cursor.execute(sql, ('%' + keyword + '%',))
         rows = cursor.fetchall()
@@ -975,7 +1102,6 @@ user = cursor.fetchone()
 
 # - RUN -
 userManagement(user)
-
 root.mainloop()
 
 conn.close()
