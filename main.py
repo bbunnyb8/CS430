@@ -2,6 +2,7 @@ from tkinter import *
 import sqlite3
 from tkinter import messagebox, Menu
 from tkinter.ttk import Treeview
+from tkinter import ttk, messagebox 
 from connect import *
 from config import *
 
@@ -23,21 +24,38 @@ def create_layout(root):
 
 #Menu Bar
 def bar_login():
-    menu_bar = Menu(root, tearoff=0)
-    menu_bar.add_command(label='Be Lune') 
+    menu_bar = Menu(root, tearoff=0) 
     menu_bar.add_command(label='login', command=login) 
-    menu_bar.add_command(label='register', command=register)
     menu_bar.add_command(label='exit', command=lambda: exit(0))  
     root.configure(menu=menu_bar)
 
 def bar_home(user):
-    menu_bar = Menu(root, tearoff=0)
-    menu_bar.add_command(label='Be Lune') 
-    menu_bar.add_command(label='order', command=lambda: order(user))
-    menu_bar.add_command(label='stock', command=lambda: stock(user))
-    menu_bar.add_command(label='profile', command=lambda: profile(user))
-    menu_bar.add_command(label='log out', command=login) 
-    root.configure(menu=menu_bar)
+    
+    if user[7] == "admin" :
+        menu_bar = Menu(root, tearoff=0)
+        menu_bar.add_command(label='dashboard', command=lambda: order(user))
+        menu_bar.add_command(label='books', command=lambda: stock(user))
+        menu_bar.add_command(label='catagory', command=lambda: profile(user))
+        menu_bar.add_command(label='shelves', command=lambda: profile(user))
+        menu_bar.add_command(label='userManagement', command=lambda: profile(user))
+        menu_bar.add_command(label='profile', command=lambda: profileUser(user))
+        menu_bar.add_command(label='log out', command=login) 
+        root.configure(menu=menu_bar)
+
+    elif user[7] == "librarian" :
+        menu_bar = Menu(root, tearoff=0)
+        borrow_menu = Menu(menu_bar, tearoff=0)
+        menu_bar.add_command(label='dashboard', command=lambda: order(user))
+        borrow_menu.add_command(label='borrowing', command=lambda: stock(user)) 
+        menu_bar.add_cascade(label='borrow', menu=borrow_menu)
+        menu_bar.add_command(label='history', command=lambda: stock(user))
+        menu_bar.add_command(label='books', command=lambda: profile(user))
+        menu_bar.add_command(label='category', command=lambda: profile(user))
+        menu_bar.add_command(label='shelves', command=lambda: profile(user))
+        menu_bar.add_command(label='profile', command=lambda: profileUser(user))
+        menu_bar.add_command(label='log out', command=login) 
+        root.configure(menu=menu_bar)
+
 
 #login page   
 def login():
@@ -94,74 +112,362 @@ def login():
     button_login = Button(bot,text="login",bg=cl_red,fg=cl_white,font=font_h3_bold, command=lambda: login_click(username_info.get(),password_info.get()))
     button_login.grid(row=0,column=0, ipadx=50, ipady=5)
         
-# Register page
-def register():
-    # - Layout Frame -
-    # frame outside
-    fm = Frame(fm_main, bg=cl_white, padx=295, pady=104)
+
+def dashboard(user):
+    fm = Frame(fm_main, bg=cl_white)
+    fm.grid(row=0, column=0, sticky=NSEW)
+    for widget in fm.winfo_children():
+        widget.destroy()
+        
+    fm.grid_rowconfigure(0, weight=0) # แถว Search ไม่ต้องขยาย
+    fm.grid_rowconfigure(1, weight=1) # แถวตาราง ขยายเต็มที่
+    fm.grid_rowconfigure(2, weight=0) # แถวปุ่ม ไม่ต้องขยาย
+    fm.grid_columnconfigure(0, weight=1)
+    bar_home(user)
+
+def books(user):
+    fm = Frame(fm_main, bg=cl_white)
+    fm.grid(row=0, column=0, sticky=NSEW)
+    for widget in fm.winfo_children():
+        widget.destroy()
+        
+    fm.grid_rowconfigure(0, weight=0) # แถว Search ไม่ต้องขยาย
+    fm.grid_rowconfigure(1, weight=1) # แถวตาราง ขยายเต็มที่
+    fm.grid_rowconfigure(2, weight=0) # แถวปุ่ม ไม่ต้องขยาย
+    fm.grid_columnconfigure(0, weight=1)
+    bar_home(user)
+
+def catagory(user):
+    fm = Frame(fm_main, bg=cl_white)
+    fm.grid(row=0, column=0, sticky=NSEW)
+    for widget in fm.winfo_children():
+        widget.destroy()
+        
+    fm.grid_rowconfigure(0, weight=0) # แถว Search ไม่ต้องขยาย
+    fm.grid_rowconfigure(1, weight=1) # แถวตาราง ขยายเต็มที่
+    fm.grid_rowconfigure(2, weight=0) # แถวปุ่ม ไม่ต้องขยาย
+    fm.grid_columnconfigure(0, weight=1)
+    bar_home(user)
+
+def shelves(user):
+    fm = Frame(fm_main, bg=cl_white)
+    fm.grid(row=0, column=0, sticky=NSEW)
+    for widget in fm.winfo_children():
+        widget.destroy()
+        
+    fm.grid_rowconfigure(0, weight=0) # แถว Search ไม่ต้องขยาย
+    fm.grid_rowconfigure(1, weight=1) # แถวตาราง ขยายเต็มที่
+    fm.grid_rowconfigure(2, weight=0) # แถวปุ่ม ไม่ต้องขยาย
+    fm.grid_columnconfigure(0, weight=1)
+    bar_home(user)
+
+def history(user):
+    fm = Frame(fm_main, bg=cl_white)
+    fm.grid(row=0, column=0, sticky=NSEW)
+    for widget in fm.winfo_children():
+        widget.destroy()
+        
+    fm.grid_rowconfigure(0, weight=0) # แถว Search ไม่ต้องขยาย
+    fm.grid_rowconfigure(1, weight=1) # แถวตาราง ขยายเต็มที่
+    fm.grid_rowconfigure(2, weight=0) # แถวปุ่ม ไม่ต้องขยาย
+    fm.grid_columnconfigure(0, weight=1)
+    bar_home(user)
+
+def profileUser(user):
+    fm = Frame(fm_main, bg=cl_white)
     fm.grid(row=0, column=0, sticky=NSEW)
     
-    # config layout for scroll page
-    fm.grid_rowconfigure((0,2), weight=1)
-    fm.grid_rowconfigure(1, weight=4)
-    fm.grid_columnconfigure((0,1), weight=1)
+    for widget in fm.winfo_children():
+        widget.destroy()
+        
+    fm.grid_rowconfigure(0, weight=0)
+    fm.grid_rowconfigure(1, weight=1)
+    fm.grid_rowconfigure(2, weight=0)
+    fm.grid_columnconfigure(0, weight=1)
     
-    # frame inside
-    top = Frame(fm,bg=cl_white)
-    top.rowconfigure(0,weight=1)
-    top.columnconfigure(0,weight=1)
-    top.grid(row=0,columnspan=2,sticky=NSEW)
-    
-    mid = Frame(fm,bg=cl_white)
-    mid.rowconfigure((0,1,2,3),weight=1)
-    mid.columnconfigure(0,weight=1)
-    mid.columnconfigure(1,weight=3)
-    mid.grid(row=1,columnspan=2,sticky=NSEW)
-    
-    bot = Frame(fm,bg=cl_white)
-    bot.rowconfigure(0,weight=1)
-    bot.columnconfigure(0,weight=1)
-    bot.grid(row=2,columnspan=2,sticky=NSEW)
-    
-    #global veriable
-    global name_register_entry, username_register_entry, password_register_entry, confirm_password_register_entry
-    
-    name_regis = StringVar()
-    username_regis = StringVar()
-    password_regis = StringVar()
-    confirm_password_regis = StringVar()
-    
-    #set scale of component
-    
-    
-    # - component inside -
-    #menubar
-    bar_login()
-    
-    # top frame 
-    Label(top,image=logo_img,bg=cl_white).grid(row=0,column=0,sticky='news') 
-    
-    # mid frame 
-    Label(mid,text="name : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=0,column=0,sticky='e')
-    name_register_entry = Entry(mid,bg=cl_white_gray, textvariable = name_regis)
-    name_register_entry.grid(row=0,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
-    
-    Label(mid,text="username : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=1,column=0,sticky='e')
-    username_register_entry = Entry(mid,bg=cl_white_gray, textvariable = username_regis)
-    username_register_entry.grid(row=1,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
-    
-    Label(mid,text="password  : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=2,column=0,sticky='e')
-    password_register_entry= Entry(mid,bg=cl_white_gray,show='*', textvariable = password_regis)
-    password_register_entry.grid(row=2,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
-    
-    Label(mid,text="confirm password  : ",bg=cl_white,fg=cl_gray,font=font_h5).grid(row=3,column=0,sticky='e')
-    confirm_password_register_entry = Entry(mid,bg=cl_white_gray,show='*', textvariable = confirm_password_regis)
-    confirm_password_register_entry.grid(row=3,column=1,sticky='w',ipadx=long_entry , ipady=high_entry ,padx=spacing_comp)
+    bar_home(user)
 
-    # bot frame 
-    button_register = Button(bot,text="register",bg=cl_red,fg=cl_white,font=font_h3_bold,command=lambda: register_click(name_regis.get(), username_regis.get(), password_regis.get(), confirm_password_regis.get()))
-    button_register.grid(row=0,column=0, ipadx=50, ipady=5)
+    # 1. แกะข้อมูล User ปัจจุบัน (เพื่อเอาไปใส่ในช่องกรอก)
+    current_id = user[0]
+    
+    # สร้างตัวแปร StringVar สำหรับ Tkinter เพื่อรอรับค่าที่แก้ไข
+    v_username = StringVar(value=user[1])
+    v_password = StringVar(value=user[2])
+    v_firstname = StringVar(value=user[3])
+    v_lastname = StringVar(value=user[4])
+    v_email = StringVar(value=user[5])
+    v_tel = StringVar(value=user[6]) 
+    v_role = StringVar(value=user[7])
 
+    # --- ฟังก์ชันบันทึกข้อมูลลง Database ---
+    def save_profile():
+        try:
+            conn, cursor = db_connection()
+            sql = """
+                UPDATE user 
+                SET username=?, password=?, firstName=?, lastName=?, email=?, tel=?
+                WHERE userID=?
+            """
+            params = (
+                v_username.get(),
+                v_password.get(),
+                v_firstname.get().strip(), # strip() เพื่อลบช่องว่างท้ายคำถ้ามี
+                v_lastname.get().strip(),
+                v_email.get(),
+                v_tel.get(),
+                current_id # ใช้ ID เดิมเป็นตัวอ้างอิง (WHERE)
+            )
+            
+            cursor.execute(sql, params)
+            conn.commit()
+            
+            messagebox.showinfo("Success", "บันทึกข้อมูลเรียบร้อยแล้ว!")
+            
+            # (Optional) ถ้าอยากให้หน้าจอรีเฟรชข้อมูลใหม่ทันที อาจต้องมีการเรียก query ข้อมูลใหม่อีกรอบ
+            # หรือส่งค่าใหม่กลับไปที่ฟังก์ชัน profileUser(new_data_tuple)
+        except Exception as e:
+            messagebox.showerror("Error", f"เกิดข้อผิดพลาด: {e}")
+
+    def cancel_edit():
+        # คืนค่าในช่องกรอก ให้กลับไปเป็นค่าเริ่มต้นจากตัวแปร user
+        v_username.set(user[1])
+        v_password.set(user[2])
+        v_firstname.set(user[3])
+        v_lastname.set(user[4])
+        v_email.set(user[5])
+        v_tel.set(user[6])
+        # (ไม่ต้องแจ้งเตือนก็ได้ หรือจะแจ้งก็ได้ครับ)
+        # messagebox.showinfo("Cancelled", "คืนค่าข้อมูลเดิมเรียบร้อยแล้ว")
+
+    # --- สร้าง Layout ---
+    content_box = Frame(fm, bg=cl_white, padx=20, pady=20)
+    content_box.grid(row=1, column=0)
+
+    Label(content_box, text="Edit Profile", font=('Arial', 24, 'bold'), bg=cl_white, fg="#333333").pack(pady=(0, 20))
+
+    # Helper Function สร้างช่องกรอก
+    def create_input(label_text, text_var, is_password=False, is_readonly=False):
+        row_frame = Frame(content_box, bg=cl_white)
+        row_frame.pack(fill='x', pady=5)
+        
+        Label(row_frame, text=label_text, font=('Arial', 12, 'bold'), width=12, anchor='w', bg=cl_white).pack(side=LEFT)
+        
+        if is_readonly:
+            # ถ้าแก้ไขไม่ได้ ให้ใช้ Entry แต่ disable ไว้ หรือใช้ Label เหมือนเดิมก็ได้
+            ent = Entry(row_frame, textvariable=text_var, font=('Arial', 12), state='disabled', disabledbackground="#f0f0f0", disabledforeground="#555")
+        else:
+            # ถ้าแก้ไขได้
+            show_char = '*' if is_password else None
+            ent = Entry(row_frame, textvariable=text_var, font=('Arial', 12), show=show_char, bg="#f9f9f9", bd=1, relief=SOLID)
+            
+        ent.pack(side=LEFT, fill='x', expand=True, ipady=3)
+
+    # แสดงผลช่องต่างๆ
+    create_input("User ID :", StringVar(value=current_id), is_readonly=True) # แก้ไม่ได้
+    create_input("Role :", v_role, is_readonly=True)    # แก้ไม่ได้ (ปกติ User ไม่ควรแก้ Role เองได้)
+    
+    Frame(content_box, height=2, bd=1, relief=SUNKEN).pack(fill='x', pady=10) # เส้นคั่น
+
+    create_input("Username :", v_username)
+    create_input("Password :", v_password, is_password=False) # ใส่ True ถ้าอยากให้เป็น ****
+    create_input("First Name :", v_firstname)
+    create_input("Last Name :", v_lastname)
+    create_input("Email :", v_email)
+    create_input("Tel :", v_tel)
+
+    btn_frame = Frame(content_box, bg=cl_white)
+    btn_frame.pack(pady=20)
+
+    # ปุ่ม Save (สีเขียว)
+    btn_save = Button(content_box, text="Save", command=save_profile, 
+                  font=('Arial', 12, 'bold'), bg="#2ecc71", fg="white", 
+                  cursor="hand2", padx=20, pady=5, bd=0)
+    btn_save.pack(pady=(20, 5)) # เพิ่มระยะห่างด้านบน 20px, ด้านล่าง 5px
+
+    # ปุ่ม Cancel (สีแดง)
+    btn_cancel = Button(content_box, text="Cancel", command=cancel_edit, 
+                    font=('Arial', 12), bg="#e74c3c", fg="white", 
+                    cursor="hand2", padx=15, pady=5, bd=0)
+    btn_cancel.pack(pady=(5, 0)) # เพิ่มระยะห่างด้านบน 5px, ด้านล่าง 0px
+
+def userManagement(user):
+    fm = Frame(fm_main, bg=cl_white)
+    fm.grid(row=0, column=0, sticky=NSEW)
+    for widget in fm.winfo_children():
+        widget.destroy()
+        
+    fm.grid_rowconfigure(0, weight=0) # แถว Search ไม่ต้องขยาย
+    fm.grid_rowconfigure(1, weight=1) # แถวตาราง ขยายเต็มที่
+    fm.grid_rowconfigure(2, weight=0) # แถวปุ่ม ไม่ต้องขยาย
+    fm.grid_columnconfigure(0, weight=1)
+    bar_home(user)
+    # ==========================================
+    # 1. ส่วนค้นหา (Search & Filter)
+    # ==========================================
+    search_frame = Frame(fm, bg='white')
+    search_frame.grid(row=0, column=0, sticky='ew', padx=10, pady=10)
+
+    Label(search_frame, text="ค้นหาจาก:", bg='white').pack(side=LEFT, padx=5)
+
+    # ตัวเลือกคอลัมน์ที่จะค้นหา (Map ชื่อที่โชว์ -> ชื่อใน DB)
+    search_options = {
+        "Username": "username",
+        "First Name": "firstName",
+        "Last Name": "lastName",
+        "Role": "role"
+    }
+    
+    combo_search = ttk.Combobox(search_frame, values=list(search_options.keys()), state="readonly", width=15)
+    combo_search.current(0) # เลือกค่าแรกเป็น Default
+    combo_search.pack(side=LEFT, padx=5)
+
+    entry_search = Entry(search_frame, width=20)
+    entry_search.pack(side=LEFT, padx=5)
+
+    def search_data():
+        selected_display = combo_search.get()
+        col_name = search_options[selected_display] # แปลงเป็นชื่อ Column ใน DB
+        keyword = entry_search.get()
+
+        # Query ข้อมูลตามเงื่อนไข
+        sql = f"SELECT * FROM user WHERE {col_name} LIKE ?"
+        cursor.execute(sql, ('%' + keyword + '%',))
+        rows = cursor.fetchall()
+        update_table(rows)
+
+    btn_search = Button(search_frame, text="ค้นหา", command=search_data, bg='#2196F3', fg='white')
+    btn_search.pack(side=LEFT, padx=5)
+
+    btn_reset = Button(search_frame, text="ล้างค่า", command=lambda: load_all_data(), bg='gray', fg='white')
+    btn_reset.pack(side=LEFT, padx=5)
+
+    # ==========================================
+    # 2. ส่วนตาราง (Treeview)
+    # ==========================================
+    columns = ('userID', 'username', 'password', 'firstName', 'lastName', 'email', 'tal', 'role')
+    tree = ttk.Treeview(fm, columns=columns, show='headings', height=10)
+    
+    # กำหนดหัวตาราง (Config เหมือนเดิมของคุณ)
+    headers = ['User ID', 'Username', 'Password', 'First Name', 'Last Name', 'Email', 'Tel', 'Role']
+    for col, head in zip(columns, headers):
+        tree.heading(col, text=head)
+        tree.column(col, width=100) # ปรับ width ตามชอบ
+
+    tree.grid(row=1, column=0, sticky='nsew', padx=10)
+
+    # Scrollbar
+    scrollbar = ttk.Scrollbar(fm, orient="vertical", command=tree.yview)
+    tree.configure(yscrollcommand=scrollbar.set)
+    scrollbar.grid(row=1, column=1, sticky='ns')
+
+    # ฟังก์ชันอัปเดตข้อมูลในตาราง
+    def update_table(rows):
+        tree.delete(*tree.get_children()) # ลบข้อมูลเก่าในตารางออกให้หมด
+        for row in rows:
+            tree.insert('', 'end', values=row)
+
+    # ฟังก์ชันโหลดข้อมูลทั้งหมด (ตอนเปิดครั้งแรก)
+    def load_all_data():
+        cursor.execute("SELECT * FROM user")
+        rows = cursor.fetchall()
+        update_table(rows)
+        entry_search.delete(0, END) # ล้างช่องค้นหา
+
+    load_all_data() # เรียกทำงานทันที
+
+    # ==========================================
+    # 3. ส่วนปุ่ม Action (Add, Edit, Delete)
+    # ==========================================
+    btn_frame = Frame(fm, bg='white')
+    btn_frame.grid(row=2, column=0, sticky='ew', padx=10, pady=10)
+
+    # --- ฟังก์ชันสำหรับปุ่มต่างๆ ---
+    
+    def open_popup(mode, data=None):
+        # สร้างหน้าต่างเด้งขึ้นมา (Toplevel)
+        popup = Toplevel()
+        popup.title(f"{mode} User")
+        popup.geometry("400x400")
+        
+        # สร้างตัวแปรรับค่า
+        vars_dict = {}
+        fields = ['userID', 'username', 'password', 'firstName', 'lastName', 'email', 'tal', 'role']
+        
+        for i, field in enumerate(fields):
+            Label(popup, text=field).grid(row=i, column=0, padx=10, pady=5, sticky='e')
+            entry = Entry(popup)
+            entry.grid(row=i, column=1, padx=10, pady=5)
+            vars_dict[field] = entry
+            
+            # ถ้าเป็นโหมด Edit ให้ใส่ข้อมูลเดิมเข้าไป
+            if mode == "Edit" and data:
+                entry.insert(0, data[i])
+                if field == 'userID': # ห้ามแก้ ID
+                    entry.config(state='readonly')
+
+        def save_data():
+            # ดึงค่าจาก Entry
+            values = [vars_dict[f].get() for f in fields]
+            cursor = conn.cursor()
+            
+            if mode == "Add":
+                try:
+                    cursor.execute("INSERT INTO user VALUES (?,?,?,?,?,?,?,?)", values)
+                    conn.commit()
+                    messagebox.showinfo("Success", "เพิ่มข้อมูลสำเร็จ")
+                    popup.destroy()
+                    load_all_data() # รีเฟรชตาราง
+                except Exception as e:
+                    messagebox.showerror("Error", f"เกิดข้อผิดพลาด: {e}")
+            
+            elif mode == "Edit":
+                try:
+                    # Update โดยอ้างอิงจาก userID (ค่าแรกใน values)
+                    sql = """UPDATE user SET username=?, password=?, firstName=?, lastName=?, 
+                             email=?, tal=?, role=? WHERE userID=?"""
+                    # values[1:] คือเอาตั้งแต่ username ถึงตัวสุดท้าย, values[0] คือ ID
+                    cursor.execute(sql, (*values[1:], values[0]))
+                    conn.commit()
+                    messagebox.showinfo("Success", "แก้ไขข้อมูลสำเร็จ")
+                    popup.destroy()
+                    load_all_data()
+                except Exception as e:
+                    messagebox.showerror("Error", f"เกิดข้อผิดพลาด: {e}")
+            conn.close()
+
+        Button(popup, text="Save", command=save_data, bg='green', fg='white').grid(row=len(fields), column=1, pady=20)
+
+    def add_user():
+        open_popup("Add")
+
+    def edit_user():
+        selected = tree.selection() # ดูว่า user เลือกแถวไหน
+        if not selected:
+            messagebox.showwarning("Warning", "กรุณาเลือกรายการที่จะแก้ไข")
+            return
+        item = tree.item(selected)
+        data = item['values'] # ได้ข้อมูลเป็น list
+        open_popup("Edit", data)
+
+    def delete_user():
+        selected = tree.selection()
+        if not selected:
+            messagebox.showwarning("Warning", "กรุณาเลือกรายการที่จะลบ")
+            return
+        
+        confirm = messagebox.askyesno("Confirm", "ต้องการลบข้อมูลนี้ใช่หรือไม่?")
+        if confirm:
+            item = tree.item(selected)
+            user_id = item['values'][0] # สมมติว่า ID อยู่คอลัมน์แรก
+            cursor.execute("DELETE FROM user WHERE userID = ?", (user_id,))
+            conn.commit()
+            load_all_data() # รีเฟรชตาราง
+
+    # วางปุ่ม
+    Button(btn_frame, text="เพิ่มข้อมูล (Add)", command=add_user, bg='green', fg='white', width=15).pack(side=LEFT, padx=5)
+    Button(btn_frame, text="แก้ไข (Edit)", command=edit_user, bg='orange', fg='white', width=15).pack(side=LEFT, padx=5)
+    Button(btn_frame, text="ลบ (Delete)", command=delete_user, bg='red', fg='white', width=15).pack(side=LEFT, padx=5)
+    
 
 def order(user,order=None):
     # - Layout Frame -
@@ -478,50 +784,22 @@ def login_click(username,password) :
             password_login_entry.focus_force()
         else :
             # check username and password 
-            sql = "select * from users where username = ? and password = ? "
+            sql = "select * from user where username = ? and password = ? "
             cursor.execute(sql,[username, password])   #case2
             user = cursor.fetchone()
             if user :
                 messagebox.showinfo("Admin:","Login Successfully")
                 print(user)
-                order(user)
+                dashboard()
+                
             else :
                 messagebox.showwarning("Admin:","Username not found\n Please register before Login")
                 password_login_entry.select_range(0,END)
                 password_login_entry.focus_force()
 
-def register_click(name, username, password, confirm_password) :
-    if name == "" :
-        messagebox.showwarning("Admin: ","Please enter name")
-        name_register_entry.focus_force()
-    elif username == "" :
-        messagebox.showwarning("Admin: ","Please enter username")
-        username_register_entry.focus_force()
-    elif password == "" :
-        messagebox.showwarning("Admin: ","Please enter password")
-        password_register_entry.focus_force()    
-    elif confirm_password == "" :
-        messagebox.showwarning("Admin: ","Please enter confirm password")
-        confirm_password_register_entry.focus_force()
-    else : 
-        result = check_user(username)
-
-        if result :
-            messagebox.showerror("Admin:","The username is already exists")
-        else :
-            if password == confirm_password: #verify a new password and confirm password are equal
-                # เพิ่มข้อมูลลงในตาราง
-                sql = ''' insert into users (username, password, name) values ( ?, ?, ?) '''
-                cursor.execute(sql, [username, password, name])
-                conn.commit()
-                messagebox.showinfo("Admin:","Registration Successfully")  
-                login()              
-            else :  #verify a new pwd and confirm pwd are not equal
-                messagebox.showwarning("Admin: ","Please make sure both password fields match exactly")
-
 #ตรวจสอบว่ามีข้อมูล username นี้อยู่ในตารางมั้ย
 def check_user(username):
-    sql = "select * from users where username = ?"
+    sql = "select * from user where username = ?"
     cursor.execute(sql, [username])
     profile = cursor.fetchone()    
     return profile
@@ -569,7 +847,15 @@ def update_profile(name, username, user_id):
                     user = retrieve_user(user_id)
                     profile(user)
                 else:
-                    messagebox.showwarning("Update Profile", "No data changes.")               
+                    messagebox.showwarning("Update Profile", "No data changes.")   
+
+def retrieve_user_management():
+    sql = "select * from user "
+    cursor.execute(sql)
+    tableUser = cursor.fetchall()
+    return tableUser
+
+
 def retrieve_user(user_id):
     sql = "select * from users where user_id = ?"
     cursor.execute(sql, [user_id])
@@ -589,7 +875,7 @@ def retrieve_product_order(product_id):
    
     return product
 def retrieve_order(user_id):
-    sql = "select * from orders where user_id = ?"
+    sql = "select * from orders where userID = ?"
     cursor.execute(sql, [user_id])
     order = cursor.fetchall()
     
@@ -809,13 +1095,13 @@ search_icon = PhotoImage(file="img/search.png")
 
 
 # admin run
-# sql = "select * from users where user_id = 1"
-# cursor.execute(sql)
-# user = cursor.fetchone()   
+sql = "select * from user where userID = 2501001"
+cursor.execute(sql)
+user = cursor.fetchone()   
 
 
 # - RUN -
-
-login()
-
+userManagement(user)
 root.mainloop()
+
+conn.close()
