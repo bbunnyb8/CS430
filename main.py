@@ -1,4 +1,3 @@
-from mailbox import mbox
 from tkinter import *
 import sqlite3
 from tkinter import messagebox, Menu
@@ -140,69 +139,14 @@ def dashboard(user):
     # เฟรมหลักของหน้า dashboard
     fm = Frame(fm_main, bg=cl_white)
     fm.grid(row=0, column=0, sticky=NSEW)
-<<<<<<< HEAD
-    for widget in fm.winfo_children():
-        widget.destroy()
-        
-    fm.grid_rowconfigure(0, weight=0) 
-    fm.grid_rowconfigure(1, weight=1) 
-    fm.grid_rowconfigure(2, weight=0) 
-=======
     fm.grid_rowconfigure(0, weight=0)  # title
     fm.grid_rowconfigure(1, weight=0)  # KPI cards
     fm.grid_rowconfigure(2, weight=1)  # content (กราฟ + รายการ)
->>>>>>> data
     fm.grid_columnconfigure(0, weight=1)
 
     # เมนูด้านบน
     bar_home(user)
     
-def clear_main_frame():
-    """ล้าง widget ทั้งหมดใน fm_main ก่อนเปลี่ยนหน้า"""
-    for w in fm_main.winfo_children():
-        w.destroy()
-
-# ================== BOOKS MODULE (Category + Shelves + Books Page) ==================
-
-def get_categories():
-    """
-    ดึง ctgID, ctgName จากตาราง category
-    ใช้ตอนเปิดฟอร์มหนังสือ
-    """
-    cursor.execute("SELECT ctgID, ctgName FROM category ORDER BY ctgID")
-    return cursor.fetchall()      # [(ctgID, ctgName), ...]
-
-def get_shelves():
-    """
-    ดึง shelfID, section, floor, aisle จากตาราง shelves
-    ใช้ตอนเปิดฟอร์มหนังสือ
-    """
-    cursor.execute("SELECT shelfID, section, floor, aisle FROM shelves ORDER BY shelfID")
-    return cursor.fetchall()     
-
-def generate_new_book_id():
-    """
-    gen bookID ใหม่แบบ B0001, B0002, ...
-    ดูจากค่าที่มากที่สุดที่ขึ้นต้นด้วย 'B'
-    """
-    cursor.execute("""
-        SELECT bookID
-        FROM books
-        WHERE bookID LIKE 'B%'
-        ORDER BY CAST(SUBSTR(bookID, 2) AS INTEGER) DESC
-        LIMIT 1
-    """)
-    row = cursor.fetchone()
-    if row and row[0]:
-        last_num = int(row[0][1:])  
-        new_num = last_num + 1
-    else:
-        new_num = 1
-
-    return f"B{new_num:04d}"        
-
-""" ============= FRONT END : BOOKS PAGE ============= """
-
     # ฟอนต์ที่ใช้เฉพาะในหน้านี้
     card_title_font = ("Tahoma", 11, "bold")     # หัวข้อการ์ด / หัวข้อ box
     card_value_font = ("Tahoma", 16, "bold")     # ตัวเลขใหญ่
@@ -544,6 +488,51 @@ def generate_new_book_id():
             font=card_sub_font
         ).pack(anchor=W, pady=4)
 
+def clear_main_frame():
+    """ล้าง widget ทั้งหมดใน fm_main ก่อนเปลี่ยนหน้า"""
+    for w in fm_main.winfo_children():
+        w.destroy()
+
+# ================== BOOKS MODULE (Category + Shelves + Books Page) ==================
+
+def get_categories():
+    """
+    ดึง ctgID, ctgName จากตาราง category
+    ใช้ตอนเปิดฟอร์มหนังสือ
+    """
+    cursor.execute("SELECT ctgID, ctgName FROM category ORDER BY ctgID")
+    return cursor.fetchall()      # [(ctgID, ctgName), ...]
+
+def get_shelves():
+    """
+    ดึง shelfID, section, floor, aisle จากตาราง shelves
+    ใช้ตอนเปิดฟอร์มหนังสือ
+    """
+    cursor.execute("SELECT shelfID, section, floor, aisle FROM shelves ORDER BY shelfID")
+    return cursor.fetchall()     
+
+def generate_new_book_id():
+    """
+    gen bookID ใหม่แบบ B0001, B0002, ...
+    ดูจากค่าที่มากที่สุดที่ขึ้นต้นด้วย 'B'
+    """
+    cursor.execute("""
+        SELECT bookID
+        FROM books
+        WHERE bookID LIKE 'B%'
+        ORDER BY CAST(SUBSTR(bookID, 2) AS INTEGER) DESC
+        LIMIT 1
+    """)
+    row = cursor.fetchone()
+    if row and row[0]:
+        last_num = int(row[0][1:])  
+        new_num = last_num + 1
+    else:
+        new_num = 1
+
+    return f"B{new_num:04d}"        
+
+""" ============= FRONT END : BOOKS PAGE ============= """
 
 def books(user):
     """
@@ -2055,12 +2044,9 @@ def login_click(username,password) :
             if user :
                 messagebox.showinfo("Admin:","Login Successfully")
                 print(user)
-<<<<<<< HEAD
-                dashboard(user)
-                
-=======
+
                 dashboard(user)   # <-- ส่ง user เข้าฟังก์ชัน
->>>>>>> data
+
             else :
                 messagebox.showwarning("Admin:","Username not found\n Please register before Login")
                 password_login_entry.select_range(0,END)
