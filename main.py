@@ -790,7 +790,7 @@ def login_click(username,password) :
             if user :
                 messagebox.showinfo("Admin:","Login Successfully")
                 print(user)
-                dashboard()
+                dashboard(user)
                 
             else :
                 messagebox.showwarning("Admin:","Username not found\n Please register before Login")
@@ -1101,7 +1101,7 @@ user = cursor.fetchone()
 
 
 # - RUN -
-userManagement(user)
+login()
 root.mainloop()
 
 conn.close()
