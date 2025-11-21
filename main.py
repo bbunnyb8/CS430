@@ -21,6 +21,10 @@ def create_layout(root):
     fm_main.grid_columnconfigure(0, weight=1)
     fm_main.grid(row=0, column=0, sticky=NSEW)
     return fm_main
+# เคลียร์ widget ทั้งหมดใน fm_main ก่อนเปลี่ยนหน้า
+def clear_main_frame():
+    for widget in fm_main.winfo_children():
+        widget.destroy()
 
 #Menu Bar
 def bar_login():
@@ -30,32 +34,31 @@ def bar_login():
     root.configure(menu=menu_bar)
 
 def bar_home(user):
-    
-    if user[7] == "admin" :
+    if user[7] == "admin":
         menu_bar = Menu(root, tearoff=0)
-        menu_bar.add_command(label='dashboard', command=lambda: order(user))
-        menu_bar.add_command(label='books', command=lambda: stock(user))
-        menu_bar.add_command(label='catagory', command=lambda: profile(user))
-        menu_bar.add_command(label='shelves', command=lambda: profile(user))
-        menu_bar.add_command(label='userManagement', command=lambda: profile(user))
+        menu_bar.add_command(label='dashboard', command=lambda: dashboard(user))
+        menu_bar.add_command(label='books', command=lambda: books(user))
+        menu_bar.add_command(label='catagory', command=lambda: catagory(user))
+        menu_bar.add_command(label='shelves', command=lambda: shelves(user))
+        menu_bar.add_command(label='userManagement', command=lambda: userManagement(user))
         menu_bar.add_command(label='profile', command=lambda: profileUser(user))
-        menu_bar.add_command(label='log out', command=login) 
+        menu_bar.add_command(label='log out', command=login)
         root.configure(menu=menu_bar)
 
-    elif user[7] == "librarian" :
+    elif user[7] == "librarian":
         menu_bar = Menu(root, tearoff=0)
         borrow_menu = Menu(menu_bar, tearoff=0)
-        menu_bar.add_command(label='dashboard', command=lambda: order(user))
-        borrow_menu.add_command(label='borrowing', command=lambda: stock(user)) 
-        menu_bar.add_cascade(label='borrow', menu=borrow_menu)
-        menu_bar.add_command(label='history', command=lambda: stock(user))
-        menu_bar.add_command(label='books', command=lambda: profile(user))
-        menu_bar.add_command(label='category', command=lambda: profile(user))
-        menu_bar.add_command(label='shelves', command=lambda: profile(user))
-        menu_bar.add_command(label='profile', command=lambda: profileUser(user))
-        menu_bar.add_command(label='log out', command=login) 
-        root.configure(menu=menu_bar)
 
+        menu_bar.add_command(label='dashboard', command=lambda: dashboard(user))
+        borrow_menu.add_command(label='borrowing', command=lambda: books(user))  # เปลี่ยนได้ตามที่ต้องการ
+        menu_bar.add_cascade(label='borrow', menu=borrow_menu)
+        menu_bar.add_command(label='history', command=lambda: history(user))
+        menu_bar.add_command(label='books', command=lambda: books(user))
+        menu_bar.add_command(label='category', command=lambda: catagory(user))
+        menu_bar.add_command(label='shelves', command=lambda: shelves(user))
+        menu_bar.add_command(label='profile', command=lambda: profileUser(user))
+        menu_bar.add_command(label='log out', command=login)
+        root.configure(menu=menu_bar)
 
 #login page   
 def login():
@@ -110,8 +113,7 @@ def login():
 
     # bot frame 
     button_login = Button(bot,text="login",bg=cl_red,fg=cl_white,font=font_h3_bold, command=lambda: login_click(username_info.get(),password_info.get()))
-    button_login.grid(row=0,column=0, ipadx=50, ipady=5)
-        
+    button_login.grid(row=0,column=0, ipadx=50, ipady=5) 
 
 def dashboard(user):
     fm = Frame(fm_main, bg=cl_white)
@@ -119,47 +121,687 @@ def dashboard(user):
     for widget in fm.winfo_children():
         widget.destroy()
         
-    fm.grid_rowconfigure(0, weight=0) # แถว Search ไม่ต้องขยาย
-    fm.grid_rowconfigure(1, weight=1) # แถวตาราง ขยายเต็มที่
-    fm.grid_rowconfigure(2, weight=0) # แถวปุ่ม ไม่ต้องขยาย
+    fm.grid_rowconfigure(0, weight=0) 
+    fm.grid_rowconfigure(1, weight=1) 
+    fm.grid_rowconfigure(2, weight=0) 
     fm.grid_columnconfigure(0, weight=1)
     bar_home(user)
+    
+def clear_main_frame():
+    """ล้าง widget ทั้งหมดใน fm_main ก่อนเปลี่ยนหน้า"""
+    for w in fm_main.winfo_children():
+        w.destroy()
+
+# ================== BOOKS MODULE (Category + Shelves + Books Page) ==================
+
+def get_categories():
+    """
+    ดึง ctgID, ctgName จากตาราง category
+    ใช้ตอนเปิดฟอร์มหนังสือ
+    """
+    cursor.execute("SELECT ctgID, ctgName FROM category ORDER BY ctgID")
+    return cursor.fetchall()      # [(ctgID, ctgName), ...]
+
+def get_shelves():
+    """
+    ดึง shelfID, section, floor, aisle จากตาราง shelves
+    ใช้ตอนเปิดฟอร์มหนังสือ
+    """
+    cursor.execute("SELECT shelfID, section, floor, aisle FROM shelves ORDER BY shelfID")
+    return cursor.fetchall()     
+
+def generate_new_book_id():
+    """
+    gen bookID ใหม่แบบ B0001, B0002, ...
+    ดูจากค่าที่มากที่สุดที่ขึ้นต้นด้วย 'B'
+    """
+    cursor.execute("""
+        SELECT bookID
+        FROM books
+        WHERE bookID LIKE 'B%'
+        ORDER BY CAST(SUBSTR(bookID, 2) AS INTEGER) DESC
+        LIMIT 1
+    """)
+    row = cursor.fetchone()
+    if row and row[0]:
+        last_num = int(row[0][1:])  
+        new_num = last_num + 1
+    else:
+        new_num = 1
+
+    return f"B{new_num:04d}"        
+
+""" ============= FRONT END : BOOKS PAGE ============= """
 
 def books(user):
-    fm = Frame(fm_main, bg=cl_white)
-    fm.grid(row=0, column=0, sticky=NSEW)
-    for widget in fm.winfo_children():
-        widget.destroy()
-        
-    fm.grid_rowconfigure(0, weight=0) # แถว Search ไม่ต้องขยาย
-    fm.grid_rowconfigure(1, weight=1) # แถวตาราง ขยายเต็มที่
-    fm.grid_rowconfigure(2, weight=0) # แถวปุ่ม ไม่ต้องขยาย
+    """
+    หน้าจอจัดการหนังสือทั้งหมด (ค้นหา / เพิ่ม / แก้ไข / ลบ)
+    """
+    clear_main_frame()
+    fm = Frame(fm_main, bg=cl_white, padx=20, pady=20)
+    fm.grid(row=0, column=0, sticky="nsew")
+
+    fm.grid_rowconfigure(0, weight=0) 
+    fm.grid_rowconfigure(1, weight=1) 
+    fm.grid_rowconfigure(2, weight=0) 
     fm.grid_columnconfigure(0, weight=1)
+
     bar_home(user)
+
+    # ---------- Top: Title + Search ----------
+    top = Frame(fm, bg=cl_white)
+    top.grid(row=0, column=0, sticky="ew", pady=(0, 10))
+
+    Label(top, text="Books", font=font_h3_bold, bg=cl_white)\
+        .pack(side=LEFT, padx=(0, 20))
+
+    Label(top, text="ค้นหาจาก:", bg=cl_white).pack(side=LEFT, padx=(0, 5))
+
+    book_search_options = {
+        "ID": "b.bookID",
+        "Title": "b.title",
+        "Author": "b.author",
+        "ISBN": "b.ISBN",
+        "Status": "b.bookStatus",
+        "Category": "c.ctgName",
+        "ShelfID": "b.shelfID"
+    }
+    book_search_cb = ttk.Combobox(
+        top,
+        values=list(book_search_options.keys()),
+        state="readonly",
+        width=10
+    )
+    book_search_cb.current(1)  # default = Title
+    book_search_cb.pack(side=LEFT, padx=5)
+
+    search_var = StringVar()
+    Entry(top, textvariable=search_var, width=30)\
+        .pack(side=LEFT, padx=5)
+
+    Button(top, text="Search", bg="#2196F3", fg="white",
+           command=lambda: refresh_books())\
+        .pack(side=LEFT, padx=5)
+    Button(top, text="Reset",
+           command=lambda: [search_var.set(""), refresh_books(reset=True)],
+           bg="gray", fg="white")\
+        .pack(side=LEFT, padx=5)
+
+    # ---------- Table ----------
+    columns = (
+        "bookID", "title", "author", "ISBN",
+        "totalCopies", "availableCopies",
+        "bookStatus", "category", "shelfID"
+    )
+    tree = ttk.Treeview(fm, columns=columns, show="headings")
+    headers = ["ID", "Title", "Author", "ISBN",
+               "Total", "Available", "Status",
+               "Category", "ShelfID"]
+    widths = [70, 220, 180, 130, 60, 80, 100, 160, 80]
+
+    for c, h, w in zip(columns, headers, widths):
+        tree.heading(c, text=h)
+        tree.column(c, width=w, anchor=W)
+
+    tree.grid(row=1, column=0, sticky="nsew")
+    scroll = ttk.Scrollbar(fm, orient="vertical", command=tree.yview)
+    tree.configure(yscrollcommand=scroll.set)
+    scroll.grid(row=1, column=1, sticky="ns")
+
+    # ใช้ BACK END ดึงข้อมูล + ใส่ในตาราง
+    def refresh_books(reset=False):
+        col = None
+        kw = None
+        if not reset:
+            txt = search_var.get().strip()
+            if txt != "":
+                display = book_search_cb.get()
+                col = book_search_options[display]
+                kw = txt
+        rows = be_get_books(col, kw)   # <-- เรียก BACK END
+        tree.delete(*tree.get_children())
+        for r in rows:
+            tree.insert("", END, values=r)
+
+    # ---------- Popup Add/Edit ----------
+    def open_book_form(mode="add"):
+        selected_values = None
+        if mode == "edit":
+            sel = tree.selection()
+            if not sel:
+                messagebox.showwarning("Books", "Please select a book.")
+                return
+            selected_values = tree.item(sel[0], "values")
+
+        popup = Toplevel(root)
+        popup.title("Add Book" if mode == "add" else "Edit Book")
+        popup.geometry("520x540")
+        popup.transient(root)
+        popup.grab_set()
+
+        frm = Frame(popup, bg=cl_white, padx=20, pady=20)
+        frm.pack(fill="both", expand=True)
+
+        # ตัวแปร
+        title_var = StringVar()
+        author_var = StringVar()
+        isbn_var = StringVar()
+        pub_var = StringVar()
+        year_var = StringVar()
+        total_var = StringVar()
+        avail_var = StringVar()
+
+        status_options = be_get_book_status_options()
+        status_var = StringVar(value="available")
+
+        ctg_list = be_get_categories_for_book()   
+        shelf_list = be_get_shelves_for_book()     
+        ctg_display = [f"{c[0]} - {c[1]}" for c in ctg_list]
+        shelf_display = [f"{s[0]} - {s[1]}" for s in shelf_list]
+        ctg_var = StringVar()
+        shelf_var = StringVar()
+
+        edit_book_id = None
+
+        # ====== โหมด EDIT: ดึงค่าจากแถวที่เลือก ======
+        if mode == "edit":
+            v = selected_values
+            edit_book_id = v[0]
+            title_var.set(v[1])
+            author_var.set(v[2])
+            isbn_var.set(v[3])
+            total_var.set(v[4])
+            avail_var.set(v[5])
+
+            current_status = v[6] or "available"
+            if current_status not in status_options:
+                status_options.append(current_status)
+            status_var.set(current_status)
+
+            for c in ctg_list:
+                if c[1] == v[7]:
+                    ctg_var.set(f"{c[0]} - {c[1]}")
+                    break
+
+            for s in shelf_list:
+                if s[0] == v[8]:
+                    shelf_var.set(f"{s[0]} - {s[1]}")
+                    break
+
+            pub, year = be_get_book_extra(edit_book_id)
+            pub_var.set(pub or "")
+            year_var.set(year or "")
+
+        def row_input(label, var, r):
+            Label(frm, text=label, bg=cl_white, anchor="e", width=14)\
+                .grid(row=r, column=0, pady=3, padx=5, sticky="e")
+            Entry(frm, textvariable=var, width=28)\
+                .grid(row=r, column=1, pady=3, padx=5, sticky="w")
+
+        row_input("Title *", title_var, 0)
+        row_input("Author", author_var, 1)
+        row_input("ISBN", isbn_var, 2)
+        row_input("Publisher", pub_var, 3)
+        row_input("Pub. Year", year_var, 4)
+        row_input("Total Copies", total_var, 5)
+        row_input("Available Copies", avail_var, 6)
+
+        Label(frm, text="Status", bg=cl_white, anchor="e", width=14)\
+            .grid(row=7, column=0, pady=3, padx=5, sticky="e")
+        status_cb = ttk.Combobox(
+            frm, textvariable=status_var,
+            values=status_options, state="readonly", width=26
+        )
+        status_cb.grid(row=7, column=1, pady=3, padx=5, sticky="w")
+
+        Label(frm, text="Category", bg=cl_white, anchor="e", width=14)\
+            .grid(row=8, column=0, pady=3, padx=5, sticky="e")
+        ttk.Combobox(
+            frm, textvariable=ctg_var,
+            values=ctg_display, state="readonly", width=26
+        ).grid(row=8, column=1, pady=3, padx=5, sticky="w")
+        
+        Label(frm, text="Shelf", bg=cl_white, anchor="e", width=14)\
+            .grid(row=9, column=0, pady=3, padx=5, sticky="e")
+        ttk.Combobox(
+            frm, textvariable=shelf_var,
+            values=shelf_display, state="readonly", width=26
+        ).grid(row=9, column=1, pady=3, padx=5, sticky="w")
+
+        # ---------- save_book ----------
+        def save_book():
+            title_txt = title_var.get().strip()
+            if title_txt == "":
+                messagebox.showwarning("Books", "Please enter title.")
+                return
+
+            author_txt = author_var.get().strip()
+            isbn_txt = isbn_var.get().strip()
+            publisher_txt = pub_var.get().strip()
+            pubyear_txt = year_var.get().strip()
+            status_txt = status_var.get().strip() or "available"
+
+            def to_int(txt, default=0):
+                txt = txt.strip()
+                if txt == "":
+                    return default
+                try:
+                    return int(txt)
+                except ValueError:
+                    return None
+
+            total_copies = to_int(total_var.get(), 0)
+            avail_copies = to_int(avail_var.get(), 0)
+
+            if total_copies is None or avail_copies is None:
+                messagebox.showerror("Books", "Total/Available must be numbers.")
+                return
+
+            if avail_var.get().strip() == "":
+                avail_copies = total_copies
+
+            ctg_id = None
+            shelf_id = None
+            if ctg_var.get():
+                ctg_id = ctg_var.get().split(" - ")[0]
+            if shelf_var.get():
+                shelf_id = shelf_var.get().split(" - ")[0]
+
+            if mode == "add":
+                be_insert_book(
+                    user_id=user[0],
+                    ctg_id=ctg_id,
+                    shelf_id=shelf_id,
+                    isbn=isbn_txt,
+                    title=title_txt,
+                    author=author_txt,
+                    publisher=publisher_txt,
+                    pub_year=pubyear_txt,
+                    total=total_copies,
+                    avail=avail_copies,
+                    status=status_txt
+                )
+            else:
+                be_update_book(
+                    book_id=edit_book_id,
+                    ctg_id=ctg_id,
+                    shelf_id=shelf_id,
+                    isbn=isbn_txt,
+                    title=title_txt,
+                    author=author_txt,
+                    publisher=publisher_txt,
+                    pub_year=pubyear_txt,
+                    total=total_copies,
+                    avail=avail_copies,
+                    status=status_txt
+                )
+
+            refresh_books(reset=True)
+            popup.destroy()
+
+        Button(frm, text="Save", command=save_book,
+               bg=cl_red, fg="white", font=font_h3_bold)\
+            .grid(row=10, column=0, columnspan=2,
+                  pady=15, ipadx=40, ipady=3)
+
+    # ---------- Bottom buttons ----------
+    bottom = Frame(fm, bg=cl_white)
+    bottom.grid(row=2, column=0, sticky="ew", pady=(10, 0))
+
+    Button(bottom, text="Add Book",
+           command=lambda: open_book_form("add"),
+           bg="#2ecc71", fg="white", width=12)\
+        .pack(side=LEFT, padx=5)
+
+    Button(bottom, text="Edit Book",
+           command=lambda: open_book_form("edit"),
+           bg="#f39c12", fg="white", width=12)\
+        .pack(side=LEFT, padx=5)
+
+    def delete_book():
+        sel = tree.selection()
+        if not sel:
+            messagebox.showwarning("Books", "Please select a book.")
+            return
+        v = tree.item(sel[0], "values")
+        bid, title_txt = v[0], v[1]
+        if not messagebox.askyesno("Books", f"Delete book '{title_txt}' ?"):
+            return
+        be_delete_book(bid)
+        refresh_books(reset=True)
+
+    Button(bottom, text="Delete Book",
+           command=delete_book,
+           bg="#e74c3c", fg="white", width=12)\
+        .pack(side=LEFT, padx=5)
+
+    # โหลดข้อมูลครั้งแรก
+    refresh_books(reset=True)
+
+""" ============= FRONT END : CATEGORY PAGE ============= """
 
 def catagory(user):
-    fm = Frame(fm_main, bg=cl_white)
-    fm.grid(row=0, column=0, sticky=NSEW)
-    for widget in fm.winfo_children():
-        widget.destroy()
-        
-    fm.grid_rowconfigure(0, weight=0) # แถว Search ไม่ต้องขยาย
-    fm.grid_rowconfigure(1, weight=1) # แถวตาราง ขยายเต็มที่
-    fm.grid_rowconfigure(2, weight=0) # แถวปุ่ม ไม่ต้องขยาย
+    clear_main_frame()
+    fm = Frame(fm_main, bg=cl_white, padx=20, pady=20)
+    fm.grid(row=0, column=0, sticky="nsew")
+
+    fm.grid_rowconfigure(0, weight=0)
+    fm.grid_rowconfigure(1, weight=1)
+    fm.grid_rowconfigure(2, weight=0)
     fm.grid_columnconfigure(0, weight=1)
+
     bar_home(user)
 
+    top = Frame(fm, bg=cl_white)
+    top.grid(row=0, column=0, sticky="ew", pady=(0, 10))
+
+    Label(top, text="Category", bg=cl_white, font=font_h3_bold)\
+        .pack(side=LEFT, padx=(0, 20))
+
+    Label(top, text="ค้นหาจาก:", bg=cl_white).pack(side=LEFT, padx=(0, 5))
+
+    cat_search_options = {
+        "Category ID": "ctgID",
+        "Category Name": "ctgName"
+    }
+    cat_search_cb = ttk.Combobox(
+        top,
+        values=list(cat_search_options.keys()),
+        state="readonly",
+        width=15
+    )
+    cat_search_cb.current(0)
+    cat_search_cb.pack(side=LEFT, padx=5)
+
+    search_var = StringVar()
+    Entry(top, textvariable=search_var, width=25)\
+        .pack(side=LEFT, padx=5)
+
+    Button(top, text="Search",
+           command=lambda: refresh_cat(), bg="#2196F3", fg="white")\
+        .pack(side=LEFT, padx=5)
+    Button(top, text="Reset",
+           command=lambda: [search_var.set(""), refresh_cat(reset=True)],
+           bg="gray", fg="white")\
+        .pack(side=LEFT, padx=5)
+
+    columns = ("ctgID", "ctgName")
+    tree = ttk.Treeview(fm, columns=columns, show="headings")
+    tree.heading("ctgID", text="Category ID")
+    tree.heading("ctgName", text="Category Name")
+    tree.column("ctgID", width=100, anchor=W)
+    tree.column("ctgName", width=260, anchor=W)
+    tree.grid(row=1, column=0, sticky="nsew")
+
+    scroll = ttk.Scrollbar(fm, orient="vertical", command=tree.yview)
+    tree.configure(yscrollcommand=scroll.set)
+    scroll.grid(row=1, column=1, sticky="ns")
+
+    def refresh_cat(reset=False):
+        col = None
+        kw = None
+        if not reset:
+            txt = search_var.get().strip()
+            if txt != "":
+                display = cat_search_cb.get()
+                col = cat_search_options[display]
+                kw = txt
+        rows = be_get_categories(col, kw)
+        tree.delete(*tree.get_children())
+        for r in rows:
+            tree.insert("", END, values=r)
+
+    def open_cat_form(mode="add"):
+        popup = Toplevel(root)
+        popup.title("Add Category" if mode == "add" else "Edit Category")
+        popup.geometry("360x200")
+        popup.transient(root)
+        popup.grab_set()
+
+        frm = Frame(popup, bg=cl_white, padx=20, pady=20)
+        frm.pack(fill="both", expand=True)
+
+        id_var = StringVar()
+        name_var = StringVar()
+
+        if mode == "edit":
+            sel = tree.selection()
+            if not sel:
+                messagebox.showwarning("Category", "Please select a row.")
+                popup.destroy()
+                return
+            v = tree.item(sel[0], "values")
+            id_var.set(v[0])
+            name_var.set(v[1])
+
+        Label(frm, text="ID", bg=cl_white, width=10, anchor="e")\
+            .grid(row=0, column=0, padx=5, pady=5)
+        ent_id = Entry(frm, textvariable=id_var, width=20)
+        ent_id.grid(row=0, column=1, padx=5, pady=5)
+
+        Label(frm, text="Name", bg=cl_white, width=10, anchor="e")\
+            .grid(row=1, column=0, padx=5, pady=5)
+        Entry(frm, textvariable=name_var, width=20)\
+            .grid(row=1, column=1, padx=5, pady=5)
+
+        if mode == "edit":
+            ent_id.config(state="readonly")
+
+        def save():
+            if id_var.get().strip() == "" or name_var.get().strip() == "":
+                messagebox.showwarning("Category", "Please fill all fields.")
+                return
+            if mode == "add":
+                be_insert_category(id_var.get().strip(), name_var.get().strip())
+            else:
+                be_update_category(id_var.get().strip(), name_var.get().strip())
+            refresh_cat(reset=True)
+            popup.destroy()
+
+        Button(frm, text="Save", command=save,
+               bg=cl_red, fg="white", font=font_h3_bold)\
+            .grid(row=2, column=0, columnspan=2,
+                  pady=15, ipadx=30, ipady=3)
+
+    bottom = Frame(fm, bg=cl_white)
+    bottom.grid(row=2, column=0, sticky="ew", pady=(10, 0))
+
+    Button(bottom, text="Add", command=lambda: open_cat_form("add"),
+           bg="#2ecc71", fg="white", width=10)\
+        .pack(side=LEFT, padx=5)
+    Button(bottom, text="Edit", command=lambda: open_cat_form("edit"),
+           bg="#f39c12", fg="white", width=10)\
+        .pack(side=LEFT, padx=5)
+
+    def delete_cat():
+        sel = tree.selection()
+        if not sel:
+            messagebox.showwarning("Category", "Please select a row.")
+            return
+        v = tree.item(sel[0], "values")
+        cid = v[0]
+        if not messagebox.askyesno("Category", f"Delete category {cid}?"):
+            return
+        be_delete_category(cid)
+        refresh_cat(reset=True)
+
+    Button(bottom, text="Delete", command=delete_cat,
+           bg="#e74c3c", fg="white", width=10)\
+        .pack(side=LEFT, padx=5)
+
+    refresh_cat(reset=True)
+
+""" ============= FRONT END : SHELVES PAGE ============= """
+
 def shelves(user):
-    fm = Frame(fm_main, bg=cl_white)
-    fm.grid(row=0, column=0, sticky=NSEW)
-    for widget in fm.winfo_children():
-        widget.destroy()
-        
-    fm.grid_rowconfigure(0, weight=0) # แถว Search ไม่ต้องขยาย
-    fm.grid_rowconfigure(1, weight=1) # แถวตาราง ขยายเต็มที่
-    fm.grid_rowconfigure(2, weight=0) # แถวปุ่ม ไม่ต้องขยาย
+    clear_main_frame()
+    fm = Frame(fm_main, bg=cl_white, padx=20, pady=20)
+    fm.grid(row=0, column=0, sticky="nsew")
+
+    fm.grid_rowconfigure(0, weight=0)
+    fm.grid_rowconfigure(1, weight=1)
+    fm.grid_rowconfigure(2, weight=0)
     fm.grid_columnconfigure(0, weight=1)
+
     bar_home(user)
+
+    top = Frame(fm, bg=cl_white)
+    top.grid(row=0, column=0, sticky="ew", pady=(0, 10))
+
+    Label(top, text="Shelves", bg=cl_white, font=font_h3_bold)\
+        .pack(side=LEFT, padx=(0, 20))
+
+    Label(top, text="ค้นหาจาก:", bg=cl_white).pack(side=LEFT, padx=(0, 5))
+
+    shelf_search_options = {
+        "Shelf ID": "shelfID",
+        "Section": "section",
+        "Floor": "floor",
+        "Aisle": "aisle"
+    }
+    shelf_search_cb = ttk.Combobox(
+        top,
+        values=list(shelf_search_options.keys()),
+        state="readonly",
+        width=12
+    )
+    shelf_search_cb.current(0)
+    shelf_search_cb.pack(side=LEFT, padx=5)
+
+    search_var = StringVar()
+    Entry(top, textvariable=search_var, width=25)\
+        .pack(side=LEFT, padx=5)
+
+    Button(top, text="Search",
+           command=lambda: refresh_shelves(), bg="#2196F3", fg="white")\
+        .pack(side=LEFT, padx=5)
+    Button(top, text="Reset",
+           command=lambda: [search_var.set(""), refresh_shelves(reset=True)],
+           bg="gray", fg="white")\
+        .pack(side=LEFT, padx=5)
+
+    columns = ("shelfID", "section", "floor", "aisle")
+    tree = ttk.Treeview(fm, columns=columns, show="headings")
+    headers = ["Shelf ID", "Section", "Floor", "Aisle"]
+    widths = [80, 180, 80, 80]
+
+    for c, h, w in zip(columns, headers, widths):
+        tree.heading(c, text=h)
+        tree.column(c, width=w, anchor=W)
+
+    tree.grid(row=1, column=0, sticky="nsew")
+    scroll = ttk.Scrollbar(fm, orient="vertical", command=tree.yview)
+    tree.configure(yscrollcommand=scroll.set)
+    scroll.grid(row=1, column=1, sticky="ns")
+
+    def refresh_shelves(reset=False):
+        col = None
+        kw = None
+        if not reset:
+            txt = search_var.get().strip()
+            if txt != "":
+                display = shelf_search_cb.get()
+                col = shelf_search_options[display]
+                kw = txt
+        rows = be_get_shelves(col, kw)
+        tree.delete(*tree.get_children())
+        for r in rows:
+            tree.insert("", END, values=r)
+
+    def open_shelf_form(mode="add"):
+        popup = Toplevel(root)
+        popup.title("Add Shelf" if mode == "add" else "Edit Shelf")
+        popup.geometry("380x230")
+        popup.transient(root)
+        popup.grab_set()
+
+        frm = Frame(popup, bg=cl_white, padx=20, pady=20)
+        frm.pack(fill="both", expand=True)
+
+        shelfID_var = StringVar()
+        section_var = StringVar()
+        floor_var = StringVar()
+        aisle_var = StringVar()
+
+        if mode == "edit":
+            sel = tree.selection()
+            if not sel:
+                messagebox.showwarning("Shelves", "Please select a row.")
+                popup.destroy()
+                return
+            v = tree.item(sel[0], "values")
+            shelfID_var.set(v[0])
+            section_var.set(v[1])
+            floor_var.set(v[2])
+            aisle_var.set(v[3])
+
+        def row_input(label, var, r, readonly=False):
+            Label(frm, text=label, bg=cl_white, width=10, anchor="e")\
+                .grid(row=r, column=0, padx=5, pady=4, sticky="e")
+            state = "readonly" if readonly else "normal"
+            ent = Entry(frm, textvariable=var, width=20, state=state)
+            ent.grid(row=r, column=1, padx=5, pady=4, sticky="w")
+            return ent
+
+        row_input("Shelf ID", shelfID_var, 0, readonly=(mode == "edit"))
+        row_input("Section", section_var, 1)
+        row_input("Floor", floor_var, 2)
+        row_input("Aisle", aisle_var, 3)
+
+        def save():
+            if shelfID_var.get().strip() == "" or section_var.get().strip() == "":
+                messagebox.showwarning("Shelves", "Please fill ShelfID & Section.")
+                return
+
+            if mode == "add":
+                be_insert_shelf(
+                    shelfID_var.get().strip(),
+                    section_var.get().strip(),
+                    floor_var.get().strip(),
+                    aisle_var.get().strip()
+                )
+            else:
+                be_update_shelf(
+                    shelfID_var.get().strip(),
+                    section_var.get().strip(),
+                    floor_var.get().strip(),
+                    aisle_var.get().strip()
+                )
+            refresh_shelves(reset=True)
+            popup.destroy()
+
+        Button(frm, text="Save", command=save,
+               bg=cl_red, fg="white", font=font_h3_bold)\
+            .grid(row=4, column=0, columnspan=2,
+                  pady=12, ipadx=30, ipady=3)
+
+    bottom = Frame(fm, bg=cl_white)
+    bottom.grid(row=2, column=0, sticky="ew", pady=(10, 0))
+
+    Button(bottom, text="Add", command=lambda: open_shelf_form("add"),
+           bg="#2ecc71", fg="white", width=10)\
+        .pack(side=LEFT, padx=5)
+    Button(bottom, text="Edit", command=lambda: open_shelf_form("edit"),
+           bg="#f39c12", fg="white", width=10)\
+        .pack(side=LEFT, padx=5)
+
+    def delete_shelf():
+        sel = tree.selection()
+        if not sel:
+            messagebox.showwarning("Shelves", "Please select a row.")
+            return
+        v = tree.item(sel[0], "values")
+        sid = v[0]
+        if not messagebox.askyesno("Shelves", f"Delete shelf {sid}?"):
+            return
+        be_delete_shelf(sid)
+        refresh_shelves(reset=True)
+
+    Button(bottom, text="Delete", command=delete_shelf,
+           bg="#e74c3c", fg="white", width=10)\
+        .pack(side=LEFT, padx=5)
+
+    refresh_shelves(reset=True)
 
 def history(user):
     fm = Frame(fm_main, bg=cl_white)
@@ -167,9 +809,9 @@ def history(user):
     for widget in fm.winfo_children():
         widget.destroy()
         
-    fm.grid_rowconfigure(0, weight=0) # แถว Search ไม่ต้องขยาย
-    fm.grid_rowconfigure(1, weight=1) # แถวตาราง ขยายเต็มที่
-    fm.grid_rowconfigure(2, weight=0) # แถวปุ่ม ไม่ต้องขยาย
+    fm.grid_rowconfigure(0, weight=0) 
+    fm.grid_rowconfigure(1, weight=1) 
+    fm.grid_rowconfigure(2, weight=0) 
     fm.grid_columnconfigure(0, weight=1)
     bar_home(user)
 
@@ -187,10 +829,8 @@ def profileUser(user):
     
     bar_home(user)
 
-    # 1. แกะข้อมูล User ปัจจุบัน (เพื่อเอาไปใส่ในช่องกรอก)
     current_id = user[0]
-    
-    # สร้างตัวแปร StringVar สำหรับ Tkinter เพื่อรอรับค่าที่แก้ไข
+
     v_username = StringVar(value=user[1])
     v_password = StringVar(value=user[2])
     v_firstname = StringVar(value=user[3])
@@ -199,7 +839,6 @@ def profileUser(user):
     v_tel = StringVar(value=user[6]) 
     v_role = StringVar(value=user[7])
 
-    # --- ฟังก์ชันบันทึกข้อมูลลง Database ---
     def save_profile():
         try:
             conn, cursor = db_connection()
@@ -344,7 +983,7 @@ def userManagement(user):
     # ==========================================
     # 2. ส่วนตาราง (Treeview)
     # ==========================================
-    columns = ('userID', 'username', 'password', 'firstName', 'lastName', 'email', 'tal', 'role')
+    columns = ('userID', 'username', 'password', 'firstName', 'lastName', 'email', 'tel', 'role')
     tree = ttk.Treeview(fm, columns=columns, show='headings', height=10)
     
     # กำหนดหัวตาราง (Config เหมือนเดิมของคุณ)
@@ -385,13 +1024,14 @@ def userManagement(user):
     
     def open_popup(mode, data=None):
         # สร้างหน้าต่างเด้งขึ้นมา (Toplevel)
-        popup = Toplevel()
+        popup = Toplevel(root)
         popup.title(f"{mode} User")
         popup.geometry("400x400")
         
-        # สร้างตัวแปรรับค่า
+        # dict เก็บ entry แต่ละช่อง
         vars_dict = {}
-        fields = ['userID', 'username', 'password', 'firstName', 'lastName', 'email', 'tal', 'role']
+        fields = ['userID', 'username', 'password', 'firstName',
+                  'lastName', 'email', 'tel', 'role']
         
         for i, field in enumerate(fields):
             Label(popup, text=field).grid(row=i, column=0, padx=10, pady=5, sticky='e')
@@ -399,43 +1039,84 @@ def userManagement(user):
             entry.grid(row=i, column=1, padx=10, pady=5)
             vars_dict[field] = entry
             
-            # ถ้าเป็นโหมด Edit ให้ใส่ข้อมูลเดิมเข้าไป
             if mode == "Edit" and data:
+                # ใส่ค่าเดิม
                 entry.insert(0, data[i])
-                if field == 'userID': # ห้ามแก้ ID
+                if field == 'userID':     # ห้ามแก้ userID
                     entry.config(state='readonly')
 
+            if mode == "Add" and field == "userID":
+                # โหมด Add ให้โชว์ว่า AUTO และแก้ไม่ได้
+                entry.insert(0, "AUTO")
+                entry.config(state='readonly')
+
         def save_data():
-            # ดึงค่าจาก Entry
-            values = [vars_dict[f].get() for f in fields]
-            cursor = conn.cursor()
-            
+            # อ่านค่าจากช่องต่าง ๆ
+            username = vars_dict['username'].get().strip()
+            password = vars_dict['password'].get().strip()
+            firstName = vars_dict['firstName'].get().strip()
+            lastName = vars_dict['lastName'].get().strip()
+            email = vars_dict['email'].get().strip()
+            tel = vars_dict['tel'].get().strip()
+            role = vars_dict['role'].get().strip().lower()
+
+            if role not in ("librarian", "admin"):
+                messagebox.showerror("Error", "Role ต้องเป็น librarian หรือ admin เท่านั้น")
+                return
+
             if mode == "Add":
                 try:
-                    cursor.execute("INSERT INTO user VALUES (?,?,?,?,?,?,?,?)", values)
+                    role_value = vars_dict['role'].get().strip()
+
+                    # เรียก generate_user_id
+                    new_id = generate_user_id(role_value)
+
+                    sql = """INSERT INTO user(userID, username, password, firstName, lastName, email, tel, role)
+                            VALUES (?,?,?,?,?,?,?,?)"""
+
+                    params = (
+                        new_id,
+                        vars_dict['username'].get(),
+                        vars_dict['password'].get(),
+                        vars_dict['firstName'].get(),
+                        vars_dict['lastName'].get(),
+                        vars_dict['email'].get(),
+                        vars_dict['tel'].get(),  # ถ้าใน table เป็น tel ให้เปลี่ยนเป็น ['tel']
+                        role_value
+                    )
+
+                    cursor.execute(sql, params)
                     conn.commit()
-                    messagebox.showinfo("Success", "เพิ่มข้อมูลสำเร็จ")
+                    messagebox.showinfo("Success", f"เพิ่มผู้ใช้สำเร็จ\nUser ID = {new_id}")
                     popup.destroy()
-                    load_all_data() # รีเฟรชตาราง
+                    load_all_data()
+
                 except Exception as e:
                     messagebox.showerror("Error", f"เกิดข้อผิดพลาด: {e}")
-            
+
             elif mode == "Edit":
                 try:
-                    # Update โดยอ้างอิงจาก userID (ค่าแรกใน values)
-                    sql = """UPDATE user SET username=?, password=?, firstName=?, lastName=?, 
-                             email=?, tal=?, role=? WHERE userID=?"""
-                    # values[1:] คือเอาตั้งแต่ username ถึงตัวสุดท้าย, values[0] คือ ID
-                    cursor.execute(sql, (*values[1:], values[0]))
+                    user_id = data[0]  # userID เดิม แก้ไม่ได้
+
+                    sql = """
+                        UPDATE user
+                        SET username=?, password=?, firstName=?, lastName=?,
+                            email=?, tel=?, role=?
+                        WHERE userID=?
+                    """
+                    cursor.execute(sql, (
+                        username, password, firstName, lastName,
+                        email, tel, role, user_id
+                    ))
                     conn.commit()
                     messagebox.showinfo("Success", "แก้ไขข้อมูลสำเร็จ")
                     popup.destroy()
                     load_all_data()
                 except Exception as e:
                     messagebox.showerror("Error", f"เกิดข้อผิดพลาด: {e}")
-            conn.close()
 
-        Button(popup, text="Save", command=save_data, bg='green', fg='white').grid(row=len(fields), column=1, pady=20)
+        Button(popup, text="Save", command=save_data,
+               bg='green', fg='white').grid(row=len(fields), column=1, pady=20)
 
     def add_user():
         open_popup("Add")
@@ -468,6 +1149,218 @@ def userManagement(user):
     Button(btn_frame, text="แก้ไข (Edit)", command=edit_user, bg='orange', fg='white', width=15).pack(side=LEFT, padx=5)
     Button(btn_frame, text="ลบ (Delete)", command=delete_user, bg='red', fg='white', width=15).pack(side=LEFT, padx=5)
     
+# ================== BOOKS / CATEGORY / SHELVES ==================
+
+def be_generate_new_book_id():
+    """
+    gen bookID ใหม่ในรูป B0001, B0002, ...
+    ใช้ cursor, conn global เดิม
+    """
+    cursor.execute("""
+        SELECT bookID
+        FROM books
+        WHERE bookID LIKE 'B%'
+        ORDER BY CAST(SUBSTR(bookID, 2) AS INTEGER) DESC
+        LIMIT 1
+    """)
+    row = cursor.fetchone()
+    if row and row[0]:
+        last_num = int(row[0][1:])
+        new_num = last_num + 1
+    else:
+        new_num = 1
+    return f"B{new_num:04d}"
+
+def be_list_books(search_text=None):
+    sql = """
+        SELECT b.bookID,
+               b.title,
+               b.author,
+               b.ISBN,
+               b.totalCopies,
+               b.availableCopies,
+               b.bookStatus,
+               c.ctgName,
+               b.shelfID
+        FROM books b
+        LEFT JOIN category c ON b.ctgID = c.ctgID
+    """
+    params = ()
+    if search_text:
+        like = f"%{search_text}%"
+        sql += " WHERE b.title LIKE ? OR b.author LIKE ? OR b.ISBN LIKE ?"
+        params = (like, like, like)
+    sql += " ORDER BY b.bookID"
+
+    cursor.execute(sql, params)
+    return cursor.fetchall()
+
+def be_get_book_status_options():
+    cursor.execute("""
+        SELECT DISTINCT bookStatus
+        FROM books
+        WHERE bookStatus IS NOT NULL AND TRIM(bookStatus) <> ''
+    """)
+    db_statuses = [row[0] for row in cursor.fetchall()]
+    default_statuses = ["available", "unavailable", "maintenance"]
+    # รวม list แล้วลบตัวซ้ำ
+    return list(dict.fromkeys(default_statuses + db_statuses))
+
+def be_get_categories():
+    cursor.execute("SELECT ctgID, ctgName FROM category ORDER BY ctgID")
+    return cursor.fetchall()
+
+def be_get_shelves():
+    cursor.execute(
+        "SELECT shelfID, section, floor, aisle FROM shelves ORDER BY shelfID"
+    )
+    return cursor.fetchall()
+
+def be_get_book_extra(book_id):
+    cursor.execute(
+        "SELECT publisher, pubYear FROM books WHERE bookID = ?",
+        (book_id,)
+    )
+    return cursor.fetchone()
+
+def be_insert_book(
+    book_id, ctg_id, shelf_id, isbn, title, author,
+    publisher, pubyear, total_copies, avail_copies,
+    status, create_by
+):
+    cursor.execute("""
+        INSERT INTO books (
+            bookID,
+            ctgID,
+            shelfID,
+            ISBN,
+            title,
+            author,
+            publisher,
+            pubYear,
+            totalCopies,
+            availableCopies,
+            bookStatus,
+            createBy
+        )
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+    """, (
+        book_id,
+        ctg_id,
+        shelf_id,
+        isbn,
+        title,
+        author,
+        publisher,
+        pubyear,
+        total_copies,
+        avail_copies,
+        status,
+        create_by
+    ))
+    conn.commit()
+
+def be_update_book(
+    book_id, ctg_id, shelf_id, isbn, title, author,
+    publisher, pubyear, total_copies, avail_copies,
+    status
+):
+    cursor.execute("""
+        UPDATE books
+        SET ctgID = ?,
+            shelfID = ?,
+            ISBN = ?,
+            title = ?,
+            author = ?,
+            publisher = ?,
+            pubYear = ?,
+            totalCopies = ?,
+            availableCopies = ?,
+            bookStatus = ?
+        WHERE bookID = ?
+    """, (
+        ctg_id,
+        shelf_id,
+        isbn,
+        title,
+        author,
+        publisher,
+        pubyear,
+        total_copies,
+        avail_copies,
+        status,
+        book_id
+    ))
+    conn.commit()
+
+def be_delete_book(book_id):
+    cursor.execute("DELETE FROM books WHERE bookID = ?", (book_id,))
+    conn.commit()
+
+# ---------- CATEGORY BACKEND ----------
+
+def be_list_categories(search_text=None):
+    sql = "SELECT ctgID, ctgName FROM category"
+    params = ()
+    if search_text:
+        like = f"%{search_text}%"
+        sql += " WHERE ctgID LIKE ? OR ctgName LIKE ?"
+        params = (like, like)
+    sql += " ORDER BY ctgID"
+    cursor.execute(sql, params)
+    return cursor.fetchall()
+
+def be_insert_category(ctg_id, ctg_name):
+    cursor.execute(
+        "INSERT INTO category(ctgID, ctgName) VALUES(?,?)",
+        (ctg_id, ctg_name)
+    )
+    conn.commit()
+
+def be_update_category(ctg_id, ctg_name):
+    cursor.execute(
+        "UPDATE category SET ctgName=? WHERE ctgID=?",
+        (ctg_name, ctg_id)
+    )
+    conn.commit()
+
+def be_delete_category(ctg_id):
+    cursor.execute("DELETE FROM category WHERE ctgID=?", (ctg_id,))
+    conn.commit()
+
+# ---------- SHELVES BACKEND ----------
+
+def be_list_shelves(search_text=None):
+    sql = "SELECT shelfID, section, floor, aisle FROM shelves"
+    params = ()
+    if search_text:
+        like = f"%{search_text}%"
+        sql += " WHERE shelfID LIKE ? OR section LIKE ?"
+        params = (like, like)
+    sql += " ORDER BY shelfID"
+    cursor.execute(sql, params)
+    return cursor.fetchall()
+
+
+def be_insert_shelf(shelf_id, section, floor, aisle):
+    cursor.execute(
+        "INSERT INTO shelves(shelfID, section, floor, aisle) VALUES(?,?,?,?)",
+        (shelf_id, section, floor, aisle)
+    )
+    conn.commit()
+
+
+def be_update_shelf(shelf_id, section, floor, aisle):
+    cursor.execute(
+        "UPDATE shelves SET section=?, floor=?, aisle=? WHERE shelfID=?",
+        (section, floor, aisle, shelf_id)
+    )
+    conn.commit()
+
+
+def be_delete_shelf(shelf_id):
+    cursor.execute("DELETE FROM shelves WHERE shelfID=?", (shelf_id,))
+    conn.commit()   
 
 def order(user,order=None):
     # - Layout Frame -
@@ -797,7 +1690,6 @@ def login_click(username,password) :
                 password_login_entry.select_range(0,END)
                 password_login_entry.focus_force()
 
-#ตรวจสอบว่ามีข้อมูล username นี้อยู่ในตารางมั้ย
 def check_user(username):
     sql = "select * from user where username = ?"
     cursor.execute(sql, [username])
@@ -808,46 +1700,40 @@ def update_profile(name, username, user_id):
     if name == "" :
         messagebox.showwarning("Admin:","Please enter name")
         name_profile_entry.focus_force() 
-    else :
-        if username == "" :
-            messagebox.showwarning("Admin:","Please enter username")
-            username_profile_entry.focus_force()  
-        else :
-            #เรียกหาข้อมูลเก่าของผู้ใช้งาน
-            sql = "select * from users where user_id = ?"
-            cursor.execute(sql,[user_id])
-            old_username = cursor.fetchone()
-            #ตรวจข้อมูลชื่อผู้ใช้ ใหม่ว่าเหมือนกับข้อมูลผู้ใช้คนอื่นมั้ย
-            sql = "select * from users where username = ?"
-            cursor.execute(sql,[username])
-            new_username = cursor.fetchone()
-            if new_username :
-                #ตรวจสอบว่าซ้ำกันจริง โดยแบ่งเป็นซ้ำกันตัวอื่นหรีอซ้ำกับตัวมันเอง
-                if new_username == old_username :   
-                    #หากซ้ำกับตัวมันเอง ให้ทำการ update name ได้
-                    sql = 'update users set name = ? where user_id = ?'
-                    cursor.execute(sql, (name, user_id))
-                    conn.commit()
-                    if cursor.rowcount > 0:
-                        messagebox.showinfo("Update Profile", "Updated profile successfully.")
-                        user = retrieve_user(user_id)
-                        profile(user)
-                    else:
-                        messagebox.showwarning("Update Profile", "No data changes.")
-                else :
-                    messagebox.showwarning("Admin:","The username already exists in the system. Please enter a new username")
-                    username_profile_entry.focus_force() 
-            else :
-                #ทำการ update username และ name
-                sql = 'update users set username = ?, name = ? where user_id = ?'
-                cursor.execute(sql, (username, name, user_id))
-                conn.commit()
-                if cursor.rowcount > 0:
-                    messagebox.showinfo("Update Profile", "Updated profile successfully.")
-                    user = retrieve_user(user_id)
-                    profile(user)
-                else:
-                    messagebox.showwarning("Update Profile", "No data changes.")   
+        return
+    if username == "" :
+        messagebox.showwarning("Admin:","Please enter username")
+        username_profile_entry.focus_force()  
+        return
+
+    sql = "select * from user where userID = ?"
+    cursor.execute(sql,[user_id])
+    old_username = cursor.fetchone()
+
+    sql = "select * from user where username = ?"
+    cursor.execute(sql,[username])
+    new_username = cursor.fetchone()
+
+    if new_username:
+        if new_username == old_username:
+            sql = 'update user set firstName = ?, username = ? where userID = ?'
+            cursor.execute(sql, (name, username, user_id))
+        else:
+            messagebox.showwarning("Admin:","The username already exists in the system. Please enter a new username")
+            username_profile_entry.focus_force()
+            return
+    else:
+        sql = 'update user set firstName = ?, username = ? where userID = ?'
+        cursor.execute(sql, (name, username, user_id))
+
+    conn.commit()
+    if cursor.rowcount > 0:
+        messagebox.showinfo("Update Profile", "Updated profile successfully.")
+        user = retrieve_user(user_id)
+        profile(user)
+    else:
+        messagebox.showwarning("Update Profile", "No data changes.")
+
 
 def retrieve_user_management():
     sql = "select * from user "
@@ -857,11 +1743,14 @@ def retrieve_user_management():
 
 
 def retrieve_user(user_id):
-    sql = "select * from users where user_id = ?"
-    cursor.execute(sql, [user_id])
-    user = cursor.fetchone()
-    
-    return user
+    sql = """
+        SELECT userID, username, password, firstName, lastName, email, tel, role
+        FROM user
+        WHERE userID = ?
+    """
+    cursor.execute(sql, (user_id,))
+    return cursor.fetchone()
+
 def retrieve_product(user_id):
     sql = "select * from products where user_id = ?"
     cursor.execute(sql, [user_id])
@@ -888,27 +1777,34 @@ def retrieve_order_item(order_id):
     return order
 
 def change_password(new_password, confirm_password, user_id):
-    if new_password == "" :
-        messagebox.showwarning("Admin:","Please enter new password")
-        change_password_entry.focus_force() 
-    else :
-        if confirm_password == "" :
-            messagebox.showwarning("Admin:","Please enter confirm password")
-            change_confirm_password_entry.focus_force()  
-        else :
-            if new_password == confirm_password :
-                sql = 'update users set password = ? where user_id = ?'
-                cursor.execute(sql, (new_password, user_id))
-                conn.commit()
-                if cursor.rowcount > 0:
-                    messagebox.showinfo("Update Profile", "Updated new password successfully.")
-                    user = retrieve_user(user_id)
-                    profile(user)
-                else:
-                    messagebox.showwarning("Update Profile", "No data changes.")
-            else :
-                messagebox.showwarning("Admin:","Your new password and confirmation do not match. Kindly confirm your password again")
-                change_confirm_password_entry.focus_force() 
+    if new_password == "":
+        messagebox.showwarning("Admin:", "Please enter new password")
+        change_password_entry.focus_force()
+        return
+
+    if confirm_password == "":
+        messagebox.showwarning("Admin:", "Please enter confirm password")
+        change_confirm_password_entry.focus_force()
+        return
+
+    if new_password != confirm_password:
+        messagebox.showwarning(
+            "Admin:",
+            "Your new password and confirmation do not match. Kindly confirm your password again"
+        )
+        change_confirm_password_entry.focus_force()
+        return
+
+    sql = "UPDATE user SET password = ? WHERE userID = ?"
+    cursor.execute(sql, (new_password, user_id))
+    conn.commit()
+
+    if cursor.rowcount > 0:
+        messagebox.showinfo("Update Profile", "Updated new password successfully.")
+        user = retrieve_user(user_id)
+    else:
+        messagebox.showwarning("Update Profile", "No data changes.")
+          
 def show_context_menu(event, tree, context_menu):
     selected_item = tree.identify_row(event.y)
     if selected_item:
@@ -1036,10 +1932,8 @@ def delete_order(tree):
             conn, cursor = db_connection()
             order_id = item[0]
 
-            # ลบ order_item ที่มี product_id นี้ก่อน
             cursor.execute("DELETE FROM order_items WHERE order_id = ?", (order_id,))
 
-            # ลบ order ที่ไม่มี order_item คงเหลือ
             cursor.execute("""
                 DELETE FROM orders
                 WHERE order_id NOT IN (
@@ -1077,6 +1971,253 @@ def search_order(search_text, user):
     results = cursor.fetchall()
     for row in results:
         tree_order.insert("", END, values=row)    
+""" ==================== BACK END : BOOKS / CATEGORY / SHELVES ==================== """
+
+# ---------- BOOKS BACK END ----------
+
+def be_get_books(filter_col=None, keyword=None):
+    sql = """
+        SELECT b.bookID,
+               b.title,
+               b.author,
+               b.ISBN,
+               b.totalCopies,
+               b.availableCopies,
+               b.bookStatus,
+               c.ctgName,
+               b.shelfID
+        FROM books b
+        LEFT JOIN category c ON b.ctgID = c.ctgID
+    """
+    params = []
+    if filter_col and keyword:
+        sql += f" WHERE {filter_col} LIKE ?"
+        params.append(f"%{keyword}%")
+
+    sql += " ORDER BY b.bookID"
+    cursor.execute(sql, params)
+    return cursor.fetchall()
+
+def be_get_book_status_options():
+    cursor.execute("""
+        SELECT DISTINCT bookStatus
+        FROM books
+        WHERE bookStatus IS NOT NULL AND TRIM(bookStatus) <> ''
+    """)
+    db_statuses = [row[0] for row in cursor.fetchall()]
+    default_statuses = ["available", "unavailable", "maintenance"]
+    # ลบซ้ำ
+    return list(dict.fromkeys(default_statuses + db_statuses))
+
+def be_get_categories_for_book():
+    cursor.execute("SELECT ctgID, ctgName FROM category ORDER BY ctgID")
+    return cursor.fetchall() 
+
+
+def be_get_shelves_for_book():
+    cursor.execute("SELECT shelfID, section, floor, aisle FROM shelves ORDER BY shelfID")
+    return cursor.fetchall() 
+
+
+def be_get_book_extra(book_id):
+    cursor.execute(
+        "SELECT publisher, pubYear FROM books WHERE bookID = ?",
+        (book_id,)
+    )
+    row = cursor.fetchone()
+    if row:
+        return row[0], row[1]
+    return None, None
+
+def be_generate_new_book_id():
+    cursor.execute("""
+        SELECT bookID
+        FROM books
+        WHERE bookID LIKE 'B%'
+        ORDER BY CAST(SUBSTR(bookID, 2) AS INTEGER) DESC
+        LIMIT 1
+    """)
+    row = cursor.fetchone()
+    if row and row[0]:
+        last_num = int(row[0][1:])
+        new_num = last_num + 1
+    else:
+        new_num = 1
+    return f"B{new_num:04d}"
+
+def be_insert_book(user_id, ctg_id, shelf_id,
+                   isbn, title, author, publisher,
+                   pub_year, total, avail, status):
+    book_id = be_generate_new_book_id()
+    cursor.execute("""
+        INSERT INTO books (
+            bookID,
+            ctgID,
+            shelfID,
+            ISBN,
+            title,
+            author,
+            publisher,
+            pubYear,
+            totalCopies,
+            availableCopies,
+            bookStatus,
+            createBy
+        )
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+    """, (
+        book_id,
+        ctg_id,
+        shelf_id,
+        isbn,
+        title,
+        author,
+        publisher,
+        pub_year,
+        total,
+        avail,
+        status,
+        user_id
+    ))
+    conn.commit()
+
+def be_update_book(book_id, ctg_id, shelf_id,
+                   isbn, title, author, publisher,
+                   pub_year, total, avail, status):
+    cursor.execute("""
+        UPDATE books
+        SET ctgID = ?,
+            shelfID = ?,
+            ISBN = ?,
+            title = ?,
+            author = ?,
+            publisher = ?,
+            pubYear = ?,
+            totalCopies = ?,
+            availableCopies = ?,
+            bookStatus = ?
+        WHERE bookID = ?
+    """, (
+        ctg_id,
+        shelf_id,
+        isbn,
+        title,
+        author,
+        publisher,
+        pub_year,
+        total,
+        avail,
+        status,
+        book_id
+    ))
+    conn.commit()
+
+
+def be_delete_book(book_id):
+    cursor.execute("DELETE FROM books WHERE bookID=?", (book_id,))
+    conn.commit()
+
+# ---------- CATEGORY BACK END ----------
+
+def be_get_categories(filter_col=None, keyword=None):
+    sql = "SELECT ctgID, ctgName FROM category"
+    params = []
+    if filter_col and keyword:
+        sql += f" WHERE {filter_col} LIKE ?"
+        params.append(f"%{keyword}%")
+    sql += " ORDER BY ctgID"
+    cursor.execute(sql, params)
+    return cursor.fetchall()
+
+
+def be_insert_category(ctg_id, ctg_name):
+    cursor.execute(
+        "INSERT INTO category(ctgID, ctgName) VALUES(?,?)",
+        (ctg_id, ctg_name)
+    )
+    conn.commit()
+
+
+def be_update_category(ctg_id, ctg_name):
+    cursor.execute(
+        "UPDATE category SET ctgName=? WHERE ctgID=?",
+        (ctg_name, ctg_id)
+    )
+    conn.commit()
+
+
+def be_delete_category(ctg_id):
+    cursor.execute("DELETE FROM category WHERE ctgID=?", (ctg_id,))
+    conn.commit()
+
+# ---------- SHELVES BACK END ----------
+
+def be_get_shelves(filter_col=None, keyword=None):
+    sql = "SELECT shelfID, section, floor, aisle FROM shelves"
+    params = []
+    if filter_col and keyword:
+        sql += f" WHERE {filter_col} LIKE ?"
+        params.append(f"%{keyword}%")
+    sql += " ORDER BY shelfID"
+    cursor.execute(sql, params)
+    return cursor.fetchall()
+
+def be_insert_shelf(shelf_id, section, floor, aisle):
+    cursor.execute(
+        "INSERT INTO shelves(shelfID, section, floor, aisle) VALUES(?,?,?,?)",
+        (shelf_id, section, floor, aisle)
+    )
+    conn.commit()
+
+
+def be_update_shelf(shelf_id, section, floor, aisle):
+    cursor.execute(
+        "UPDATE shelves SET section=?, floor=?, aisle=? WHERE shelfID=?",
+        (section, floor, aisle, shelf_id)
+    )
+    conn.commit()
+
+def be_delete_shelf(shelf_id):
+    cursor.execute("DELETE FROM shelves WHERE shelfID=?", (shelf_id,))
+    conn.commit()
+# ===========================
+#      BACK-END USER
+# ===========================
+def generate_user_id(role):
+    """
+    รูปแบบ: 25 + roleCode(01/02) + running 3 หลัก
+    25 = ปี
+    role:
+        librarian -> 01
+        admin -> 02
+    """
+    year_prefix = "25"
+    if role == "librarian":
+        role_code = "01"
+    elif role == "admin":
+        role_code = "02"
+    else:
+        role_code = "99"
+
+    prefix = year_prefix + role_code 
+    cursor.execute("""
+        SELECT userID
+        FROM user
+        WHERE userID LIKE ?
+        ORDER BY CAST(SUBSTR(userID, 5) AS INTEGER) DESC
+        LIMIT 1
+    """, (prefix + "%",))
+
+    row = cursor.fetchone()
+
+    if row:
+        last_run = int(row[0][4:]) 
+    else:
+        last_run = 0
+
+    new_run = last_run + 1
+    return f"{prefix}{new_run:03d}"
+
 # --------------------------------------------------------------------------------------------------------
 root = create_window()
 fm_main = create_layout(root)
@@ -1095,12 +2236,13 @@ search_icon = PhotoImage(file="img/search.png")
 
 
 # admin run
-sql = "select * from user where userID = 2501001"
-cursor.execute(sql)
-user = cursor.fetchone()   
+# sql = "select * from user where userID = 2501001"
+# cursor.execute(sql)
+# user = cursor.fetchone()   
 
 
 # - RUN -
+
 login()
 root.mainloop()
 
