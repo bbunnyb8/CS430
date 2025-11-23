@@ -5,6 +5,7 @@ from tkinter.ttk import Treeview
 from tkinter import ttk, messagebox 
 from connect import *
 from config import *
+from datetime import date, datetime, timedelta
 
 """ FRONT END """
 def create_window():
@@ -49,7 +50,7 @@ def bar_home(user):
         menu_bar = Menu(root, tearoff=0)
         borrow_menu = Menu(menu_bar, tearoff=0)
         menu_bar.add_command(label='dashboard', command=lambda: dashboard(user))
-        borrow_menu.add_command(label='borrowing', command=lambda: books(user))  # เปลี่ยนได้ตามที่ต้องการ
+        borrow_menu.add_command(label='borrowing', command=lambda: BorrowPageUser(user))  # เปลี่ยนได้ตามที่ต้องการ
         menu_bar.add_cascade(label='borrow', menu=borrow_menu)
         menu_bar.add_command(label='history', command=lambda: history(user))
         menu_bar.add_command(label='books', command=lambda: books(user))
@@ -58,6 +59,724 @@ def bar_home(user):
         menu_bar.add_command(label='profile', command=lambda: profileUser(user))
         menu_bar.add_command(label='log out', command=login)
         root.configure(menu=menu_bar)
+
+
+
+# =========================
+#      BORROW PAGE NEW
+# =========================
+# ==========================================================
+#                      BORROW PAGE (NEW)
+# ==========================================================
+def BorrowPageUser(user):
+    """
+    หน้า Borrowing System + History
+    - ค้นหานักศึกษา
+    - เลือกนักศึกษา -> แสดงโปรไฟล์
+    - เลือกหนังสือที่ว่าง -> ยืม
+    - แสดงประวัติการยืม / คืน
+    - คืนหนังสือ + คำนวณค่าปรับ
+    - ลบรายการยืม (กรณีบันทึกผิด)
+    """
+    clear_main_frame()
+    bar_home(user)
+
+    # ค่าปรับต่อวัน (บาท)
+    FINE_PER_DAY = 10
+
+    fm = Frame(fm_main, bg=cl_white, padx=20, pady=20)
+    fm.grid(row=0, column=0, sticky="nsew")
+
+    fm.grid_rowconfigure(0, weight=0)   # title
+    fm.grid_rowconfigure(1, weight=0)   # search
+    fm.grid_rowconfigure(2, weight=1)   # student list
+    fm.grid_rowconfigure(3, weight=0)   # profile
+    fm.grid_rowconfigure(4, weight=0)   # select book
+    fm.grid_rowconfigure(5, weight=1)   # history
+    fm.grid_columnconfigure(0, weight=1)
+
+    # ------------------ Title ------------------
+    Label(
+        fm,
+        text="Borrowing System",
+        bg=cl_white,
+        fg="black",
+        font=("Kanit", 22, "bold")
+    ).grid(row=0, column=0, sticky="w", pady=(0, 10))
+
+    # ------------------ Search Student ------------------
+    search_frame = Frame(fm, bg=cl_white)
+    search_frame.grid(row=1, column=0, sticky="w", pady=(0, 10))
+
+    Label(
+        search_frame,
+        text="ค้นหานักศึกษา:",
+        bg=cl_white,
+        font=font_h5
+    ).pack(side=LEFT)
+
+    v_search = StringVar()
+    ent_search = Entry(search_frame, textvariable=v_search, width=30, bg=cl_white_gray)
+    ent_search.pack(side=LEFT, padx=8, ipady=2)
+
+    def do_search(event=None):
+        load_students(v_search.get().strip())
+
+    Button(
+        search_frame,
+        text="ค้นหา",
+        bg=cl_red,
+        fg="white",
+        font=font_h5,
+        command=do_search
+    ).pack(side=LEFT, padx=5)
+
+    ent_search.bind("<Return>", do_search)
+
+    # ------------------ Student List ------------------
+    Label(
+        fm,
+        text="รายชื่อนักศึกษา",
+        bg=cl_white,
+        font=("Kanit", 14, "bold")
+    ).grid(row=2, column=0, sticky="w")
+
+    student_cols = ("stdID", "firstName", "lastName", "faculty", "major")
+    student_tree = ttk.Treeview(
+        fm,
+        columns=student_cols,
+        show="headings",
+        height=6
+    )
+
+    headers = ["รหัสนักศึกษา", "ชื่อ", "นามสกุล", "คณะ", "สาขา"]
+    widths = [110, 120, 140, 220, 220]
+
+    for c, h, w in zip(student_cols, headers, widths):
+        student_tree.heading(c, text=h)
+        student_tree.column(c, width=w, anchor=W)
+
+    student_tree.grid(row=2, column=0, sticky="nsew", pady=(5, 10))
+    scroll_std = ttk.Scrollbar(fm, orient="vertical", command=student_tree.yview)
+    student_tree.configure(yscrollcommand=scroll_std.set)
+    scroll_std.grid(row=2, column=1, sticky="ns", pady=(5, 10))
+
+    # ------------------ Profile Box ------------------
+    profile_box = LabelFrame(
+        fm,
+        text="ข้อมูลนักศึกษา",
+        font=("Kanit", 14, "bold"),
+        bg=cl_white
+    )
+    profile_box.grid(row=3, column=0, sticky="ew", pady=(0, 10))
+
+    profile_box.grid_columnconfigure(1, weight=1)
+
+    v_profile = {
+        "stdID": StringVar(),
+        "name": StringVar(),
+        "faculty": StringVar(),
+        "major": StringVar(),
+        "email": StringVar(),
+        "tel": StringVar(),
+    }
+
+    def add_profile_row(r, label, var):
+        Label(profile_box, text=label, bg=cl_white, font=font_h5)\
+            .grid(row=r, column=0, sticky="w", padx=10, pady=2)
+        Label(profile_box, textvariable=var, bg=cl_white, font=font_h5)\
+            .grid(row=r, column=1, sticky="w", padx=10, pady=2)
+
+    add_profile_row(0, "รหัส:", v_profile["stdID"])
+    add_profile_row(1, "ชื่อ:", v_profile["name"])
+    add_profile_row(2, "คณะ:", v_profile["faculty"])
+    add_profile_row(3, "สาขา:", v_profile["major"])
+    add_profile_row(4, "อีเมล:", v_profile["email"])
+    add_profile_row(5, "โทร:", v_profile["tel"])
+
+    # ------------------ Book Select + Buttons ------------------
+    action_box = Frame(fm, bg=cl_white)
+    action_box.grid(row=4, column=0, sticky="ew", pady=(0, 10))
+
+    Label(
+        action_box,
+        text="เลือกหนังสือเพื่อยืม:",
+        bg=cl_white,
+        font=font_h5
+    ).pack(side=LEFT, padx=(0, 5))
+
+    v_book = StringVar()
+    book_combo = ttk.Combobox(
+        action_box,
+        textvariable=v_book,
+        width=50,
+        state="readonly"
+    )
+    book_combo.pack(side=LEFT, padx=5)
+
+    # ปุ่ม ยืม / คืน / ลบ
+    btn_borrow = Button(
+        action_box,
+        text="ยืมหนังสือ",
+        bg=cl_red,
+        fg="white",
+        font=font_h5
+    )
+    btn_borrow.pack(side=LEFT, padx=8)
+
+    btn_return = Button(
+        action_box,
+        text="คืนหนังสือ",
+        bg="grey",
+        fg="white",
+        font=font_h5
+    )
+    btn_return.pack(side=LEFT, padx=5)
+
+    btn_delete = Button(
+        action_box,
+        text="ลบรายการ",
+        bg="black",
+        fg="white",
+        font=font_h5
+    )
+    btn_delete.pack(side=LEFT, padx=5)
+    btn_edit = Button(
+    action_box,
+    text="แก้ไข",
+    bg="#0055ff",
+    fg="white",
+    font=font_h5
+    )
+    btn_edit.pack(side=LEFT, padx=5)
+
+
+
+    # ------------------ History Table ------------------
+    his_frame = LabelFrame(
+        fm,
+        text="ประวัติการยืมของนักศึกษาคนนี้",
+        font=("Kanit", 14, "bold"),
+        bg=cl_white
+    )
+    his_frame.grid(row=5, column=0, sticky="nsew")
+
+    his_cols = ("brwID", "bookID", "title", "borrowDate",
+                "dueDate", "returnDate", "status", "fine")
+    his_table = ttk.Treeview(his_frame, columns=his_cols, show="headings")
+
+    his_headers = [
+        "Borrow ID", "Book ID", "ชื่อหนังสือ",
+        "วันที่ยืม", "วันกำหนดคืน", "วันที่คืน",
+        "สถานะ", "ค่าปรับ"
+    ]
+    his_widths = [80, 80, 260, 100, 100, 100, 110, 80]
+
+    for c, h, w in zip(his_cols, his_headers, his_widths):
+        his_table.heading(c, text=h)
+        his_table.column(c, width=w, anchor=W)
+
+    his_table.pack(fill="both", expand=True)
+    scroll_his = ttk.Scrollbar(his_frame, orient="vertical", command=his_table.yview)
+    his_table.configure(yscrollcommand=scroll_his.set)
+    scroll_his.pack(side=RIGHT, fill=Y)
+
+    # ----------------------------------------------------------------
+    #                    HELPER FUNCTIONS (inner)
+    # ----------------------------------------------------------------
+    def generate_new_borrow_id(cur):
+        """
+        gen รหัสยืม BRW001, BRW002, ...
+        """
+        cur.execute("""
+            SELECT brwID
+            FROM borrowings
+            ORDER BY CAST(SUBSTR(brwID, 4) AS INTEGER) DESC
+            LIMIT 1
+        """)
+        row = cur.fetchone()
+        if row and row[0]:
+            last_num = int(row[0][3:])
+            return f"BRW{last_num+1:03d}"
+        return "BRW001"
+
+    def load_students(keyword=""):
+        student_tree.delete(*student_tree.get_children())
+        conn, cur = db_connection()
+
+        if keyword:
+            kw = f"%{keyword}%"
+            cur.execute("""
+                SELECT stdID, stdFirstName, stdLastName, faculty, major
+                FROM student
+                WHERE stdID LIKE ?
+                   OR stdFirstName LIKE ?
+                   OR stdLastName LIKE ?
+                ORDER BY stdID
+            """, (kw, kw, kw))
+        else:
+            cur.execute("""
+                SELECT stdID, stdFirstName, stdLastName, faculty, major
+                FROM student
+                ORDER BY stdID
+            """)
+        rows = cur.fetchall()
+        conn.close()
+
+        for r in rows:
+            student_tree.insert("", "end", values=r)
+
+    def load_profile(std_row):
+        """
+        std_row: (stdID, firstName, lastName, faculty, major)
+        ดึง email, tel เพิ่ม แล้วโหลด history + books
+        """
+        stdID = std_row[0]
+        conn, cur = db_connection()
+        cur.execute("""
+            SELECT stdID, stdFirstName, stdLastName,
+                   faculty, major, email, tel
+            FROM student
+            WHERE stdID = ?
+        """, (stdID,))
+        s = cur.fetchone()
+        conn.close()
+
+        if not s:
+            return
+
+        v_profile["stdID"].set(s[0])
+        v_profile["name"].set(s[1] + " " + s[2])
+        v_profile["faculty"].set(s[3])
+        v_profile["major"].set(s[4])
+        v_profile["email"].set(s[5] or "")
+        v_profile["tel"].set(s[6] or "")
+
+        load_history(stdID)
+        load_books()
+
+    def load_history(stdID):
+        his_table.delete(*his_table.get_children())
+        conn, cur = db_connection()
+        cur.execute("""
+            SELECT b.brwID,
+                   b.bookID,
+                   k.title,
+                   b.borrowDate,
+                   b.dueDate,
+                   IFNULL(b.returnDate, '-'),
+                   b.status,
+                   IFNULL(b.fineAmount, 0)
+            FROM borrowings b
+            JOIN books k ON b.bookID = k.bookID
+            WHERE b.stdID = ?
+            ORDER BY b.brwID DESC
+        """, (stdID,))
+        rows = cur.fetchall()
+        conn.close()
+
+        for r in rows:
+            his_table.insert("", "end", values=r)
+
+    def load_books():
+        """
+        โหลดเฉพาะหนังสือที่ยัง Available > 0
+        """
+        conn, cur = db_connection()
+        cur.execute("""
+            SELECT bookID, title
+            FROM books
+            WHERE availableCopies > 0
+            ORDER BY CAST(SUBSTR(bookID, 2) AS INTEGER)
+        """)
+        rows = cur.fetchall()
+        conn.close()
+
+        display = [f"{r[0]} - {r[1]}" for r in rows]
+        book_combo["values"] = display
+        if display:
+            book_combo.current(0)
+        else:
+            v_book.set("")
+
+    def borrow_book():
+        stdID = v_profile["stdID"].get()
+        if not stdID:
+            messagebox.showwarning("Borrow", "กรุณาเลือกนักศึกษาก่อน")
+            return
+
+        if not v_book.get():
+            messagebox.showwarning("Borrow", "กรุณาเลือกหนังสือที่จะยืม")
+            return
+
+        book_id = v_book.get().split(" - ")[0]
+
+        conn, cur = db_connection()
+
+        # จำกัดจำนวนเล่มที่ยืมค้าง (เช่น 3 เล่ม)
+        cur.execute("""
+            SELECT COUNT(*)
+            FROM borrowings
+            WHERE stdID = ?
+              AND status = 'Borrowed'
+              AND (returnDate IS NULL OR returnDate = '')
+        """, (stdID,))
+        cnt = cur.fetchone()[0]
+        if cnt >= 3:
+            conn.close()
+            messagebox.showwarning(
+                "Borrow",
+                "นักศึกษาคนนี้มียืมค้างครบจำนวนที่กำหนดแล้ว (3 เล่ม)"
+            )
+            return
+
+        # เช็ค stock หนังสือ
+        cur.execute("SELECT availableCopies FROM books WHERE bookID = ?", (book_id,))
+        row = cur.fetchone()
+        if (not row) or row[0] <= 0:
+            conn.close()
+            messagebox.showwarning("Borrow", "หนังสือเล่มนี้ไม่พร้อมให้ยืมแล้ว")
+            return
+
+        # สร้างรหัสยืมใหม่
+        brw_id = generate_new_borrow_id(cur)
+        today = date.today()
+        due = today + timedelta(days=14)
+
+        cur.execute("""
+            INSERT INTO borrowings
+                (brwID, stdID, bookID, borrowDate, dueDate, status, fineAmount,userID)
+            VALUES (?,?,?,?,?,?,?,?)
+        """, (
+            brw_id,
+            stdID,
+            book_id,
+            today.isoformat(),
+            due.isoformat(),
+            "Borrowed",
+            0,
+            user[0] 
+        ))
+
+        cur.execute("""
+            UPDATE books
+            SET availableCopies = availableCopies - 1
+            WHERE bookID = ?
+        """, (book_id,))
+
+        conn.commit()
+        conn.close()
+
+        load_history(stdID)
+        load_books()
+        messagebox.showinfo("Borrow", "ทำรายการยืมหนังสือเรียบร้อยแล้ว")
+
+    def return_book():
+        sel = his_table.selection()
+        if not sel:
+            messagebox.showwarning("Return", "กรุณาเลือกรายการที่จะคืนจากตารางประวัติ")
+            return
+
+        vals = his_table.item(sel[0], "values")
+        brw_id, book_id, title, brw_date, due_date, return_date, status, fine_now = vals
+
+        if status.startswith("Returned"):
+            messagebox.showinfo("Return", "รายการนี้คืนไปแล้ว")
+            return
+
+        today = date.today()
+
+        # คำนวณค่าปรับ
+        try:
+            d_due = datetime.strptime(due_date, "%Y-%m-%d").date()
+        except ValueError:
+            d_due = today
+
+        if today > d_due:
+            days_late = (today - d_due).days
+            fine_amount = days_late * FINE_PER_DAY
+            new_status = "Returned (Late)"
+        else:
+            fine_amount = 0
+            new_status = "Returned"
+
+        conn, cur = db_connection()
+        cur.execute("""
+            UPDATE borrowings
+            SET returnDate = ?,
+                status = ?,
+                fineAmount = ?
+            WHERE brwID = ?
+        """, (today.isoformat(), new_status, fine_amount, brw_id))
+
+        cur.execute("""
+            UPDATE books
+            SET availableCopies = availableCopies + 1
+            WHERE bookID = ?
+        """, (book_id,))
+        conn.commit()
+        conn.close()
+
+        stdID = v_profile["stdID"].get()
+        if stdID:
+            load_history(stdID)
+        load_books()
+
+        msg = f"คืนหนังสือเรียบร้อยแล้ว"
+        if fine_amount > 0:
+            msg += f"\nค่าปรับ {fine_amount} บาท"
+        messagebox.showinfo("Return", msg)
+
+    def delete_borrow():
+        sel = his_table.selection()
+        if not sel:
+            messagebox.showwarning("Delete", "กรุณาเลือกรายการที่จะลบจากตารางประวัติ")
+            return
+
+        vals = his_table.item(sel[0], "values")
+        brw_id, book_id, title, brw_date, due_date, return_date, status, fine_now = vals
+
+        if not messagebox.askyesno("Delete", f"ต้องการลบรายการยืม {brw_id} ใช่หรือไม่?"):
+            return
+
+        conn, cur = db_connection()
+
+        # ถ้ายังอยู่สถานะ Borrowed ให้คืน stock ด้วย
+        if status == "Borrowed":
+            cur.execute("""
+                UPDATE books
+                SET availableCopies = availableCopies + 1
+                WHERE bookID = ?
+            """, (book_id,))
+
+        cur.execute("DELETE FROM borrowings WHERE brwID = ?", (brw_id,))
+        conn.commit()
+        conn.close()
+
+        stdID = v_profile["stdID"].get()
+        if stdID:
+            load_history(stdID)
+        load_books()
+
+        messagebox.showinfo("Delete", "ลบรายการยืมเรียบร้อยแล้ว")
+
+    def edit_borrow():
+        sel = his_table.selection()
+        if not sel:
+            messagebox.showwarning("Edit", "กรุณาเลือกรายการที่จะแก้ไขจากตารางประวัติ")
+            return
+
+        vals = his_table.item(sel[0], "values")
+        brw_id, book_id, title, brw_date, due_date, return_date, status, fine_now = vals
+
+        win = Toplevel(fm)
+        win.title(f"แก้ไขสถานะ: {brw_id}")
+        win.geometry("350x250")
+        win.grab_set()
+
+        Label(win, text="สถานะใหม่:", font=("Kanit", 14, "bold")).pack(pady=10)
+
+        v_new_status = StringVar(value=status)
+        cmb = ttk.Combobox(
+            win,
+            textvariable=v_new_status,
+            values=["Borrowed", "Returned", "Returned (Late)"],
+            state="readonly",
+            font=("Kanit", 12)
+        )
+        cmb.pack()
+
+        Label(win, text="วันคืนใหม่ (YYYY-MM-DD):", font=("Kanit", 12)).pack(pady=10)
+
+        from datetime import date
+
+        v_new_return = StringVar(value=date.today().isoformat())   # ← ตั้งเป็นวันนี้อัตโนมัติ
+        ent_return = Entry(win, textvariable=v_new_return, font=("Kanit", 12))
+        ent_return.pack()
+
+        def save_edit():
+            new_status = v_new_status.get()
+            new_return = v_new_return.get().strip()
+
+            conn, cur = db_connection()
+            cur.execute("""
+                UPDATE borrowings 
+                SET status=?, returnDate=?
+                WHERE brwID=?
+            """, (new_status, new_return, brw_id))
+
+            conn.commit()
+            conn.close()
+
+            stdID = v_profile["stdID"].get()
+            load_history(stdID)
+
+            messagebox.showinfo("Edit", "อัปเดตข้อมูลเรียบร้อยแล้ว")
+            win.destroy()
+
+        Button(
+            win,
+            text="บันทึกการแก้ไข",
+            bg="blue",
+            fg="white",
+            font=("Kanit", 12),
+            command=save_edit
+        ).pack(pady=15)
+
+
+
+
+    def on_select_student(event):
+        sel = student_tree.selection()
+        if not sel:
+            return
+        vals = student_tree.item(sel[0], "values")
+        load_profile(vals)
+
+    # ผูก event / ปุ่มกับฟังก์ชัน
+    student_tree.bind("<<TreeviewSelect>>", on_select_student)
+    btn_borrow.configure(command=borrow_book)
+    btn_return.configure(command=return_book)
+    btn_delete.configure(command=delete_borrow)
+    btn_edit.configure(command=edit_borrow)
+
+    # โหลดข้อมูลเริ่มต้น
+    load_students()
+    load_books()
+
+def history(user):
+    clear_main_frame()
+    bar_home(user)
+
+    fm = Frame(fm_main, bg=cl_white, padx=20, pady=20)
+    fm.grid(row=0, column=0, sticky="nsew")
+    fm_main.grid_rowconfigure(0, weight=1)
+    fm_main.grid_columnconfigure(0, weight=1)
+
+    fm.grid_rowconfigure(2, weight=1)  # ให้ตารางขยายเต็มจอ
+    fm.grid_columnconfigure(0, weight=1)
+
+    Label(
+        fm, text="History (All Status)",
+        font=("Kanit", 22, "bold"),
+        bg=cl_white
+    ).grid(row=0, column=0, sticky="w", pady=(0, 10))
+
+    # ------------------- Search + Filter -------------------
+    search_frame = Frame(fm, bg=cl_white)
+    search_frame.grid(row=1, column=0, sticky="w")
+
+    Label(search_frame, text="ค้นหา:", bg=cl_white, font=font_h5)\
+        .pack(side=LEFT)
+
+    # Dropdown filter
+    status_var = StringVar()
+    status_filter = ttk.Combobox(search_frame,
+                                 textvariable=status_var,
+                                 width=18,
+                                 state="readonly")
+    status_filter['values'] = [
+        "All Status", "Borrowed", "Returned", "Returned (Late)"
+    ]
+    status_filter.current(0)
+    status_filter.pack(side=LEFT, padx=10)
+
+    v_search = StringVar()
+    ent = Entry(search_frame, textvariable=v_search,
+                width=40, bg=cl_white_gray)
+    ent.pack(side=LEFT, padx=8)
+
+    # ปุ่มค้นหา
+    Button(
+        search_frame, text="ค้นหา",
+        bg=cl_red, fg="white", font=font_h5,
+        command=lambda: load_history(v_search.get().strip(),
+                                     status_var.get())
+    ).pack(side=LEFT)
+
+    # ------------------- Table -------------------
+    cols = (
+        "brwID", "stdID", "name",
+        "bookID", "title",
+        "borrowDate", "dueDate", "returnDate",
+        "fine"
+    )
+
+    table = ttk.Treeview(fm, columns=cols, show="headings")
+    headers = [
+        "Borrow ID", "Student ID", "Name",
+        "Book ID", "Title",
+        "Borrow Date", "Due Date", "Return Date",
+        "Fine"
+    ]
+    widths = [80, 100, 160, 80, 260, 100, 100, 100, 80]
+
+    for c, h, w in zip(cols, headers, widths):
+        table.heading(c, text=h)
+        table.column(c, width=w, anchor=W)
+
+    table.grid(row=2, column=0, sticky="nsew", padx=5, pady=10)
+    scroll = ttk.Scrollbar(fm, orient="vertical", command=table.yview)
+    table.configure(yscrollcommand=scroll.set)
+    scroll.grid(row=2, column=1, sticky="ns", pady=10)
+
+    # =====================================================
+    #              LOAD HISTORY FUNCTION (INSIDE)
+    # =====================================================
+    def load_history(keyword="", status="All Status"):
+        table.delete(*table.get_children())
+
+        conn, cur = db_connection()
+
+        # ------------------- FILTER STATUS -------------------
+        if status == "Borrowed":
+            status_condition = " AND b.status = 'Borrowed' "
+        elif status == "Returned":
+            status_condition = " AND b.status = 'Returned' "
+        elif status == "Returned (Late)":
+            status_condition = " AND b.status = 'Returned (Late)' "
+        else:
+            status_condition = ""   # All Status
+
+        # ------------------- SQL QUERY -------------------
+        sql = f"""
+            SELECT  b.brwID,
+                    b.stdID,
+                    s.stdFirstName || ' ' || s.stdLastName AS fullName,
+                    b.bookID,
+                    k.title,
+                    b.borrowDate,
+                    b.dueDate,
+                    b.returnDate,
+                    IFNULL(b.fineAmount, 0)
+            FROM borrowings b
+            JOIN student s ON s.stdID = b.stdID
+            JOIN books k   ON k.bookID = b.bookID
+            WHERE (
+                    b.brwID LIKE ?
+                 OR b.stdID LIKE ?
+                 OR s.stdFirstName LIKE ?
+                 OR s.stdLastName LIKE ?
+                 OR k.title LIKE ?
+            )
+            {status_condition}
+            ORDER BY b.returnDate DESC
+        """
+
+        key = f"%{keyword}%"
+        cur.execute(sql, (key, key, key, key, key))
+        rows = cur.fetchall()
+        conn.close()
+
+        for r in rows:
+            table.insert("", "end", values=r)
+
+    # โหลดข้อมูลครั้งแรก
+    load_history("")
+
+
+
+
 
 #login page   
 def login():
@@ -1164,17 +1883,7 @@ def shelves(user):
 
     refresh_shelves(reset=True)
 
-def history(user):
-    fm = Frame(fm_main, bg=cl_white)
-    fm.grid(row=0, column=0, sticky=NSEW)
-    for widget in fm.winfo_children():
-        widget.destroy()
-        
-    fm.grid_rowconfigure(0, weight=0) 
-    fm.grid_rowconfigure(1, weight=1) 
-    fm.grid_rowconfigure(2, weight=0) 
-    fm.grid_columnconfigure(0, weight=1)
-    bar_home(user)
+
 
 def profileUser(user):
     fm = Frame(fm_main, bg=cl_white)
@@ -1688,6 +2397,23 @@ def be_update_category(ctg_id, ctg_name):
 def be_delete_category(ctg_id):
     cursor.execute("DELETE FROM category WHERE ctgID=?", (ctg_id,))
     conn.commit()
+
+def borrow_page(user):
+    clear_main_frame()
+
+    fm = Frame(main_frame, bg="white")
+    fm.grid(row=0, column=0, sticky="nsew")
+
+    # Layout 3 แถว
+    fm.grid_rowconfigure(0, weight=0)  # student table
+    fm.grid_rowconfigure(1, weight=0)  # student detail
+    fm.grid_rowconfigure(2, weight=1)  # borrow history + borrow form
+    fm.grid_columnconfigure(0, weight=1)
+
+    Label(fm, text="Borrowing System", font=("Kanit", 18, "bold"), bg="white").grid(
+        row=0, column=0, pady=(10,5)
+    )
+
 
 # ---------- SHELVES BACKEND ----------
 
@@ -2581,31 +3307,28 @@ def generate_user_id(role):
     return f"{prefix}{new_run:03d}"
 
 # --------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------
 root = create_window()
 fm_main = create_layout(root)
-conn,cursor = db_connection()
+conn, cursor = db_connection()
 
-# - Spy -
-
-
-# - img -
-logo_img = PhotoImage(file="img/logo_full.png").subsample(4,4)
+# โหลดรูป
+logo_img = PhotoImage(file="img/logo_full.png").subsample(4, 4)
 add_cart_icon = PhotoImage(file="img/add_cart.png")
 add_item_icon = PhotoImage(file="img/add_item.png")
 delete_icon = PhotoImage(file="img/delete.png")
 edit_icon = PhotoImage(file="img/edit.png")
 search_icon = PhotoImage(file="img/search.png")
 
+# ถ้าอยากให้ล็อกอินหน้าแรก ให้เรียก login()
+login()
 
-# admin run
+# ถ้าอยากเทสต์เข้าเป็นแอดมินตรง ๆ ค่อยใช้โค้ดนี้ทีหลัง
 # sql = "select * from user where userID = 2501001"
 # cursor.execute(sql)
-# user = cursor.fetchone()   
+# user = cursor.fetchone()
+# dashboard(user)
 
-
-# - RUN -
-
-login()
 root.mainloop()
-
 conn.close()
+
