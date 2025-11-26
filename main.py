@@ -241,14 +241,7 @@ def BorrowPageUser(user):
         font=font_h5
     )
     btn_delete.pack(side=LEFT, padx=5)
-    btn_edit = Button(
-    action_box,
-    text="แก้ไข",
-    bg="#0055ff",
-    fg="white",
-    font=font_h5
-    )
-    btn_edit.pack(side=LEFT, padx=5)
+
 
 
 
@@ -560,39 +553,7 @@ def BorrowPageUser(user):
 
         messagebox.showinfo("Delete", "ลบรายการยืมเรียบร้อยแล้ว")
 
-    def edit_borrow():
-        sel = his_table.selection()
-        if not sel:
-            messagebox.showwarning("Edit", "กรุณาเลือกรายการที่จะแก้ไขจากตารางประวัติ")
-            return
 
-        vals = his_table.item(sel[0], "values")
-        brw_id, book_id, title, brw_date, due_date, return_date, status, fine_now = vals
-
-        win = Toplevel(fm)
-        win.title(f"แก้ไขสถานะ: {brw_id}")
-        win.geometry("350x250")
-        win.grab_set()
-
-        Label(win, text="สถานะใหม่:", font=("Kanit", 14, "bold")).pack(pady=10)
-
-        v_new_status = StringVar(value=status)
-        cmb = ttk.Combobox(
-            win,
-            textvariable=v_new_status,
-            values=["Borrowed", "Returned", "Returned (Late)"],
-            state="readonly",
-            font=("Kanit", 12)
-        )
-        cmb.pack()
-
-        Label(win, text="วันคืนใหม่ (YYYY-MM-DD):", font=("Kanit", 12)).pack(pady=10)
-
-        from datetime import date
-
-        v_new_return = StringVar(value=date.today().isoformat())   # ← ตั้งเป็นวันนี้อัตโนมัติ
-        ent_return = Entry(win, textvariable=v_new_return, font=("Kanit", 12))
-        ent_return.pack()
 
         def save_edit():
             new_status = v_new_status.get()
@@ -638,7 +599,7 @@ def BorrowPageUser(user):
     btn_borrow.configure(command=borrow_book)
     btn_return.configure(command=return_book)
     btn_delete.configure(command=delete_borrow)
-    btn_edit.configure(command=edit_borrow)
+    
 
     # โหลดข้อมูลเริ่มต้น
     load_students()
@@ -676,7 +637,7 @@ def history(user):
                                  width=18,
                                  state="readonly")
     status_filter['values'] = [
-        "All Status", "Borrowed", "Returned", "Returned (Late)"
+        "All Status", "Borrowing", "Returned", "Returned (Late)"
     ]
     status_filter.current(0)
     status_filter.pack(side=LEFT, padx=10)
@@ -729,7 +690,7 @@ def history(user):
         conn, cur = db_connection()
 
         # ------------------- FILTER STATUS -------------------
-        if status == "Borrowed":
+        if status == "Borrowing":
             status_condition = " AND b.status = 'Borrowed' "
         elif status == "Returned":
             status_condition = " AND b.status = 'Returned' "
@@ -760,7 +721,7 @@ def history(user):
                  OR k.title LIKE ?
             )
             {status_condition}
-            ORDER BY b.returnDate DESC
+            ORDER BY b.borrowDate DESC
         """
 
         key = f"%{keyword}%"
