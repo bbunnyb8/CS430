@@ -50,9 +50,9 @@ def bar_home(user):
         menu_bar = Menu(root, tearoff=0)
         borrow_menu = Menu(menu_bar, tearoff=0)
         menu_bar.add_command(label='dashboard', command=lambda: dashboard(user))
-        borrow_menu.add_command(label='borrowing', command=lambda: BorrowPageUser(user))  # เปลี่ยนได้ตามที่ต้องการ
         menu_bar.add_cascade(label='borrow', menu=borrow_menu)
-        menu_bar.add_command(label='history', command=lambda: history(user))
+        borrow_menu.add_command(label='borrowing', command=lambda: BorrowPageUser(user))  # เปลี่ยนได้ตามที่ต้องการ
+        borrow_menu.add_command(label='history', command=lambda: history(user))
         menu_bar.add_command(label='books', command=lambda: books(user))
         menu_bar.add_command(label='category', command=lambda: catagory(user))
         menu_bar.add_command(label='shelves', command=lambda: shelves(user))
