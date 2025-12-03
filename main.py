@@ -2051,34 +2051,89 @@ def userManagement(user):
     btn_frame = Frame(fm, bg='white')
     btn_frame.grid(row=2, column=0, sticky='ew', padx=10, pady=10)
 
+    def get_next_id():
+        try:
+            # เลือกค่า userID ที่มากที่สุดในตาราง
+            cursor.execute("SELECT MAX(userID) FROM user")
+            result = cursor.fetchone()[0]
+            
+            # ถ้าไม่มีข้อมูลเลย (result เป็น None) ให้เริ่มที่ 1
+            if result is None:
+                return 1
+            else:
+                # ถ้ามีข้อมูล ให้เอาค่ามากที่สุด + 1
+                return int(result) + 1
+        except Exception as e:
+            print(e)
+            return 1
+
     # --- ฟังก์ชันสำหรับปุ่มต่างๆ ---
     
     def open_popup(mode, data=None):
         # สร้างหน้าต่างเด้งขึ้นมา (Toplevel)
         popup = Toplevel(root)
         popup.title(f"{mode} User")
-        popup.geometry("400x400")
+        popup.geometry("400x450")
         
-        # dict เก็บ entry แต่ละช่อง
         vars_dict = {}
-        fields = ['userID', 'username', 'password', 'firstName',
-                  'lastName', 'email', 'tel', 'role']
+        # เรียงลำดับ field ใหม่ เอา Role มาไว้ใกล้ๆ ID จะได้เลือกก่อนได้
+        fields = ['userID', 'role', 'username', 'password', 'firstName', 'lastName', 'email', 'tel']
         
+        # ฟังก์ชันอัปเดต ID เมื่อมีการเลือก Role (ใช้เฉพาะตอน Add)
+        def update_id_on_role_select(event):
+            if mode == "Add":
+                selected_role = vars_dict['role'].get()
+                if selected_role:
+                    # เรียกฟังก์ชัน generate_user_id ที่มีอยู่แล้วด้านล่างไฟล์
+                    new_id = generate_user_id(selected_role)
+                    
+                    # อัปเดตช่อง userID
+                    entry_id = vars_dict['userID']
+                    entry_id.config(state='normal') # ปลดล็อกก่อนแก้
+                    entry_id.delete(0, END)
+                    entry_id.insert(0, new_id)
+                    entry_id.config(state='readonly') # ล็อกกลับ
+
         for i, field in enumerate(fields):
             Label(popup, text=field).grid(row=i, column=0, padx=10, pady=5, sticky='e')
-            entry = Entry(popup)
-            entry.grid(row=i, column=1, padx=10, pady=5)
-            vars_dict[field] = entry
             
-            if mode == "Edit" and data:
-                # ใส่ค่าเดิม
-                entry.insert(0, data[i])
-                if field == 'userID':     # ห้ามแก้ userID
-                    entry.config(state='readonly')
+            # --- กรณีเป็น Role ให้สร้างเป็น Dropdown ---
+            if field == 'role':
+                entry = ttk.Combobox(popup, values=["librarian", "admin"], state="readonly")
+                entry.grid(row=i, column=1, padx=10, pady=5, sticky='ew')
+                # ผูก Event: เมื่อเลือกค่า ให้ไปเรียกฟังก์ชัน update_id_on_role_select
+                entry.bind("<<ComboboxSelected>>", update_id_on_role_select)
+            
+            # --- กรณีอื่นสร้างเป็นช่องกรอกปกติ ---
+            else:
+                entry = Entry(popup)
+                entry.grid(row=i, column=1, padx=10, pady=5)
 
+            vars_dict[field] = entry    
+
+            # --- จัดการค่าเริ่มต้น (Add/Edit) ---
+            
+            # กรณี Edit: ใส่ค่าเดิมลงไป
+            if mode == "Edit" and data:
+                # ต้อง map index ของ data ให้ตรงกับชื่อ field เพราะ data เรียงตาม DB
+                # DB: userID(0), username(1), password(2), firstName(3), lastName(4), email(5), tel(6), role(7)
+                db_map = {
+                    'userID': 0, 'username': 1, 'password': 2, 'firstName': 3, 
+                    'lastName': 4, 'email': 5, 'tel': 6, 'role': 7
+                }
+                val = data[db_map[field]]
+                
+                if field == 'role':
+                    entry.set(val) # Combobox ใช้ set
+                else:
+                    entry.insert(0, val)
+                
+                if field == 'userID':     
+                    entry.config(state='readonly') # ห้ามแก้ ID
+
+            # กรณี Add:
             if mode == "Add" and field == "userID":
-                # โหมด Add ให้โชว์ว่า AUTO และแก้ไม่ได้
-                entry.insert(0, "AUTO")
+                entry.insert(0, "Select Role First...") # บอกให้เลือก Role ก่อน
                 entry.config(state='readonly')
 
         def save_data():
@@ -2089,65 +2144,73 @@ def userManagement(user):
             lastName = vars_dict['lastName'].get().strip()
             email = vars_dict['email'].get().strip()
             tel = vars_dict['tel'].get().strip()
-            role = vars_dict['role'].get().strip().lower()
+            role = vars_dict['role'].get().strip()
 
             if role not in ("librarian", "admin"):
                 messagebox.showerror("Error", "Role ต้องเป็น librarian หรือ admin เท่านั้น")
                 return
 
-            if mode == "Add":
-                try:
-                    role_value = vars_dict['role'].get().strip()
+            def save_data():
+                # อ่านค่าจากช่องต่าง ๆ
+                username = vars_dict['username'].get().strip()
+                password = vars_dict['password'].get().strip()
+                firstName = vars_dict['firstName'].get().strip()
+                lastName = vars_dict['lastName'].get().strip()
+                email = vars_dict['email'].get().strip()
+                tel = vars_dict['tel'].get().strip()
+                role = vars_dict['role'].get().strip() # ไม่ต้อง lower() เพราะ dropdown บังคับค่าแล้ว
 
-                    # เรียก generate_user_id
-                    new_id = generate_user_id(role_value)
+                if not role:
+                    messagebox.showerror("Error", "กรุณาเลือก Role")
+                    return
 
-                    sql = """INSERT INTO user(userID, username, password, firstName, lastName, email, tel, role)
-                            VALUES (?,?,?,?,?,?,?,?)"""
+                if mode == "Add":
+                    try:
+                        # ดึง ID ที่โชว์อยู่ในช่อง (ซึ่งเจนมาแล้วตอนเลือก Role)
+                        final_id = vars_dict['userID'].get()
+                        
+                        # ป้องกันกรณี User ยังไม่เลือก Role แล้วกด Save
+                        if not final_id or "Select" in final_id:
+                            messagebox.showerror("Error", "กรุณาเลือก Role เพื่อสร้าง User ID")
+                            return
 
-                    params = (
-                        new_id,
-                        vars_dict['username'].get(),
-                        vars_dict['password'].get(),
-                        vars_dict['firstName'].get(),
-                        vars_dict['lastName'].get(),
-                        vars_dict['email'].get(),
-                        vars_dict['tel'].get(),  # ถ้าใน table เป็น tel ให้เปลี่ยนเป็น ['tel']
-                        role_value
-                    )
+                        sql = """INSERT INTO user(userID, username, password, firstName, lastName, email, tel, role)
+                                VALUES (?,?,?,?,?,?,?,?)"""
 
-                    cursor.execute(sql, params)
-                    conn.commit()
-                    messagebox.showinfo("Success", f"เพิ่มผู้ใช้สำเร็จ\nUser ID = {new_id}")
-                    popup.destroy()
-                    load_all_data()
+                        params = (final_id, username, password, firstName, lastName, email, tel, role)
 
-                except Exception as e:
-                    messagebox.showerror("Error", f"เกิดข้อผิดพลาด: {e}")
+                        cursor.execute(sql, params)
+                        conn.commit()
+                        messagebox.showinfo("Success", f"เพิ่มผู้ใช้สำเร็จ\nUser ID = {final_id}")
+                        popup.destroy()
+                        load_all_data()
 
-            elif mode == "Edit":
-                try:
-                    user_id = data[0]  # userID เดิม แก้ไม่ได้
+                    except Exception as e:
+                        messagebox.showerror("Error", f"เกิดข้อผิดพลาด: {e}")
 
-                    sql = """
-                        UPDATE user
-                        SET username=?, password=?, firstName=?, lastName=?,
-                            email=?, tel=?, role=?
-                        WHERE userID=?
-                    """
-                    cursor.execute(sql, (
-                        username, password, firstName, lastName,
-                        email, tel, role, user_id
-                    ))
-                    conn.commit()
-                    messagebox.showinfo("Success", "แก้ไขข้อมูลสำเร็จ")
-                    popup.destroy()
-                    load_all_data()
-                except Exception as e:
-                    messagebox.showerror("Error", f"เกิดข้อผิดพลาด: {e}")
+                elif mode == "Edit":
+                    try:
+                        user_id = vars_dict['userID'].get() # ดึงจากช่อง Entry โดยตรง
 
-        Button(popup, text="Save", command=save_data,
-               bg='green', fg='white').grid(row=len(fields), column=1, pady=20)
+                        sql = """
+                            UPDATE user
+                            SET username=?, password=?, firstName=?, lastName=?,
+                                email=?, tel=?, role=?
+                            WHERE userID=?
+                        """
+                        cursor.execute(sql, (
+                            username, password, firstName, lastName,
+                            email, tel, role, user_id
+                        ))
+                        conn.commit()
+                        messagebox.showinfo("Success", "แก้ไขข้อมูลสำเร็จ")
+                        popup.destroy()
+                        load_all_data()
+                    except Exception as e:
+                        messagebox.showerror("Error", f"เกิดข้อผิดพลาด: {e}")
+
+            Button(popup, text="Save", command=save_data,
+                bg='green', fg='white').grid(row=len(fields), column=1, pady=20)
 
     def add_user():
         open_popup("Add")
@@ -3260,7 +3323,7 @@ def generate_user_id(role):
     row = cursor.fetchone()
 
     if row:
-        last_run = int(row[0][4:]) 
+        last_run = int(str(row[0])[4:]) 
     else:
         last_run = 0
 
